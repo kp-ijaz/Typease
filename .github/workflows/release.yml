@@ -1,0 +1,148 @@
+# Release: a version tag (v1.4.2) builds the six images and pushes them to GHCR.
+#
+#   ghcr.io/<owner>/typease-api:<version>            + :sha-<short commit>
+#   ghcr.io/<owner>/typease-worker:...               typease-centre-web, typease-customer-web,
+#                                                    typease-corporate-portal, typease-platform-admin
+#
+# Images carry BuildKit provenance (SLSA, mode=max) and an SBOM attestation, stored in the
+# registry next to the image (`docker buildx imagetools inspect <image> --format '{{json .Provenance}}'`).
+# No "latest" tag is published: deployments always name an immutable version.
+#
+# Web images: NEXT_PUBLIC_* values are compiled INTO the bundle. The API URL therefore comes
+# from the GitHub environment selected below (Settings > Environments > production >
+# Variables: NEXT_PUBLIC_API_URL, NEXT_PUBLIC_STORAGE_ORIGINS, optional API_INTERNAL_URL). One environment = one set of
+# web images; to serve staging and production from the same tag, run this workflow manually
+# for the other environment (the image name gets the suffix -<environment>).
+#
+# Not executed yet (reviewed by hand, YAML parsed). Actions are pinned to release tags: pin
+# them to commit SHAs before production use (see the note in ci.yml).
+name: Release
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub environment that provides NEXT_PUBLIC_API_URL
+        type: choice
+        options: [production, staging]
+        default: production
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}-${{ inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  images:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: ${{ inputs.environment || 'production' }}
+    permissions:
+      contents: read
+      packages: write          # push to GHCR
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: api, dockerfile: infrastructure/docker/api.Dockerfile, app: "", port: "", web: false }
+          - { name: worker, dockerfile: infrastructure/docker/worker.Dockerfile, app: "", port: "", web: false }
+          - { name: centre-web, dockerfile: infrastructure/docker/web.Dockerfile, app: centre-web, port: "3001", web: true }
+          - { name: customer-web, dockerfile: infrastructure/docker/web.Dockerfile, app: customer-web, port: "3002", web: true }
+          - { name: corporate-portal, dockerfile: infrastructure/docker/web.Dockerfile, app: corporate-portal, port: "3003", web: true }
+          - { name: platform-admin, dockerfile: infrastructure/docker/web.Dockerfile, app: platform-admin, port: "3004", web: true }
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - name: Compute image name and tags
+        id: meta
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          TARGET_ENV: ${{ inputs.environment || 'production' }}
+          IMAGE: ${{ matrix.name }}
+          IS_WEB: ${{ matrix.web }}
+        run: |
+          owner="$(printf '%s' "$OWNER" | tr '[:upper:]' '[:lower:]')"      # GHCR names are lower-case
+          suffix=""
+          if [ "$IS_WEB" = true ] && [ "$TARGET_ENV" != production ]; then suffix="-$TARGET_ENV"; fi
+          image="ghcr.io/$owner/typease-$IMAGE$suffix"
+          short="sha-$(printf '%s' "$SHA" | cut -c1-12)"
+          tags="$image:$short"
+          if [ "$REF_TYPE" = tag ]; then tags="$tags,$image:$REF_NAME"; fi
+          version="$REF_NAME"; [ "$REF_TYPE" = tag ] || version="$short"
+          {
+            echo "image=$image"
+            echo "tags=$tags"
+            echo "version=$version"
+            echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: NEXT_PUBLIC_API_URL must be configured for web images
+        if: matrix.web
+        env:
+          API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+        run: |
+          case "$API_URL" in
+            https://*) echo "web images will call $API_URL" ;;
+            *) echo "::error::Set the environment variable NEXT_PUBLIC_API_URL (https://api.<your domain>) in the GitHub environment."; exit 1 ;;
+          esac
+
+      - uses: docker/setup-buildx-action@v3.10.0
+      - uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          platforms: linux/amd64          # add linux/arm64 (QEMU or native runners) if you deploy on ARM
+          tags: ${{ steps.meta.outputs.tags }}
+          provenance: mode=max
+          sbom: true
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.created=${{ steps.meta.outputs.created }}
+          build-args: |
+            APP=${{ matrix.app }}
+            PORT=${{ matrix.port }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_STORAGE_ORIGINS=${{ vars.NEXT_PUBLIC_STORAGE_ORIGINS }}
+            API_INTERNAL_URL=${{ vars.API_INTERNAL_URL || 'http://api:4000' }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+      # The same gate as in CI, on the image that was actually pushed.
+      - name: Trivy scan of the pushed image
+        env:
+          IMAGE_REF: ${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD aquasec/trivy:0.57.1 image \
+            --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 --no-progress "$IMAGE_REF"
+
+      - name: Summary
+        env:
+          IMAGE_REF: ${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          {
+            echo "### ${{ matrix.name }}"
+            echo "- digest: \`$IMAGE_REF\`"
+            echo "- tags: \`$TAGS\`"
+          } >> "$GITHUB_STEP_SUMMARY"

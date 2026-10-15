@@ -1,0 +1,32 @@
+{
+  "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+  "customerNo": "CUS-000001",
+  "type": "INDIVIDUAL",
+  "fullName": "Fatima Al Mansoori",
+  "fullNameAr": "فاطمة المنصوري",
+  "preferredLanguage": "en",
+  "email": "fatima@mobile-fixture.test",
+  "phone": "+971501110002",
+  "nationality": null,
+  "dateOfBirth": null,
+  "address": {
+    "city": "Dubai",
+    "line1": "Villa 12",
+    "country": "AE",
+    "emirate": "Dubai"
+  },
+  "communicationPrefs": {
+    "email": true,
+    "sms": true,
+    "whatsapp": false,
+    "push": true
+  },
+  "marketingOptIn": false,
+  "emiratesIdMasked": null,
+  "hasEmiratesId": false,
+  "emiratesIdExpiry": null,
+  "passportNoMasked": null,
+  "hasPassport": false,
+  "passportCountry": null,
+  "passportExpiry": null
+}

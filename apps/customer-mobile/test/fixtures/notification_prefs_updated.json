@@ -1,0 +1,35 @@
+{
+  "channels": [
+    "EMAIL",
+    "SMS",
+    "WHATSAPP",
+    "IN_APP",
+    "PUSH"
+  ],
+  "groups": [
+    "account",
+    "requests",
+    "payments",
+    "appointments",
+    "reminders",
+    "support",
+    "billing",
+    "reports",
+    "marketing"
+  ],
+  "channelDefaults": {
+    "sms": true,
+    "push": true,
+    "email": true,
+    "whatsapp": false
+  },
+  "preferences": [
+    {
+      "channel": "PUSH",
+      "eventGroup": "marketing",
+      "enabled": false,
+      "updatedAt": "2026-10-08T22:47:53.868Z"
+    }
+  ],
+  "note": "Account-security messages (verification, password reset, one-time codes) are always sent."
+}

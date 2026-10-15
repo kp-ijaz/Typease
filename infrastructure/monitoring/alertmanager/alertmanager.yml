@@ -1,0 +1,44 @@
+# Alertmanager starter configuration. As shipped, alerts are grouped and shown in the
+# Alertmanager UI but NOT SENT ANYWHERE ("null" receiver). For production copy this file to
+# <TYPEASE_ENV_DIR>/alertmanager.yml (it will contain credentials), add a real receiver and
+# point `route.receiver` / the critical route at it.
+route:
+  receiver: "null"
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: "null"          # replace with your on-call receiver
+      repeat_interval: 1h
+
+# A firing "down" alert makes the dependent alerts noise.
+inhibit_rules:
+  - source_matchers:
+      - alertname = "TypeaseApiAbsent"
+    target_matchers:
+      - alertname =~ "TypeaseApiNotReady|TypeaseApiNotLive|TypeaseApiDown"
+  - source_matchers:
+      - alertname = "TypeasePostgresDown"
+    target_matchers:
+      - alertname = "TypeaseApiNotReady"
+
+receivers:
+  - name: "null"
+
+  # --- examples (uncomment one and fill it in) ---------------------------------
+  # - name: ops-email
+  #   email_configs:
+  #     - to: ops@example.ae
+  #       from: alerts@example.ae
+  #       smarthost: smtp.example.ae:587
+  #       auth_username: alerts@example.ae
+  #       auth_password_file: /etc/alertmanager/smtp_password
+  #       send_resolved: true
+  #
+  # - name: ops-webhook            # Slack-compatible, Teams bridge, PagerDuty/Opsgenie integration URL ...
+  #   webhook_configs:
+  #     - url_file: /etc/alertmanager/webhook_url
+  #       send_resolved: true

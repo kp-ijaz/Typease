@@ -1,0 +1,10 @@
+    <!-- typease:begin permissions (applied by tool/native/apply_native_config.py) -->
+    <!-- Network access. The Flutter template declares it only for debug builds. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Android 13+: needed to show push notifications. The app asks at run time,
+         and only when push is configured (FIREBASE_ENABLED). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- CAMERA is deliberately NOT declared: image_picker takes photos through the
+         system camera app, which needs no permission as long as the app does not
+         declare one. Declaring it would add a permission prompt for no benefit. -->
+    <!-- typease:end permissions -->

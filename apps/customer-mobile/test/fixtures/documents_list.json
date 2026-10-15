@@ -1,0 +1,74 @@
+{
+  "data": [
+    {
+      "id": "add15e9f-52e0-47af-ba73-0da2411aca24",
+      "customerId": "d07e8204-075f-46c6-9073-7086af6edf0a",
+      "corporateAccountId": null,
+      "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+      "documentTypeKey": "photo",
+      "category": null,
+      "title": "Personal photo, white background",
+      "status": "AVAILABLE",
+      "verificationStatus": "UNVERIFIED",
+      "verifiedAt": null,
+      "issuedDate": null,
+      "expiryDate": null,
+      "expiryVerified": false,
+      "isCompletionDocument": false,
+      "uploadedByType": "CUSTOMER",
+      "createdAt": "2026-10-08T22:45:23.087Z",
+      "updatedAt": "2026-10-08T22:45:23.292Z",
+      "currentVersion": {
+        "id": "8747a1ab-e07d-4c0a-a1f0-035970fc11c7",
+        "versionNo": 1,
+        "filename": "photo.png",
+        "mime": "image/png",
+        "sizeBytes": 97,
+        "uploadStatus": "COMPLETED",
+        "scanStatus": "SKIPPED",
+        "scannedAt": "2026-10-08T22:45:23.287Z",
+        "createdAt": "2026-10-08T22:45:23.097Z",
+        "downloadable": true
+      },
+      "downloadable": true
+    },
+    {
+      "id": "df45bae0-cecf-4674-b247-471606cbfbaa",
+      "customerId": "d07e8204-075f-46c6-9073-7086af6edf0a",
+      "corporateAccountId": null,
+      "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+      "documentTypeKey": "passport",
+      "category": null,
+      "title": "Passport copy (valid at least 6 months)",
+      "status": "AVAILABLE",
+      "verificationStatus": "UNVERIFIED",
+      "verifiedAt": null,
+      "issuedDate": null,
+      "expiryDate": "2030-01-01",
+      "expiryVerified": false,
+      "isCompletionDocument": false,
+      "uploadedByType": "CUSTOMER",
+      "createdAt": "2026-10-08T22:45:11.219Z",
+      "updatedAt": "2026-10-08T22:45:23.058Z",
+      "currentVersion": {
+        "id": "2ed7344b-5505-4c81-8dd6-d71c979b66f1",
+        "versionNo": 1,
+        "filename": "passport.png",
+        "mime": "image/png",
+        "sizeBytes": 96,
+        "uploadStatus": "COMPLETED",
+        "scanStatus": "SKIPPED",
+        "scannedAt": "2026-10-08T22:45:23.047Z",
+        "createdAt": "2026-10-08T22:45:11.223Z",
+        "downloadable": true
+      },
+      "downloadable": true
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 2,
+    "totalPages": 1
+  }
+}

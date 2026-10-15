@@ -1,0 +1,14 @@
+[
+  {
+    "id": "8884be5a-249c-4b8b-8ba3-e7e41dec5bd1",
+    "app": "mobile",
+    "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+    "deviceName": "Pixel 8",
+    "userAgent": "curl/8.5.0",
+    "ip": "127.0.0.1",
+    "createdAt": "2026-10-08T22:49:25.357Z",
+    "lastUsedAt": "2026-10-08T22:49:25.357Z",
+    "expiresAt": "2026-11-07T22:49:25.357Z",
+    "current": true
+  }
+]

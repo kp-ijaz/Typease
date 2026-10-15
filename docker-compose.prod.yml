@@ -1,0 +1,666 @@
+# =============================================================================
+# TypEase - SINGLE-HOST PRODUCTION REFERENCE
+#
+#   docker compose --env-file /etc/typease/compose.env -f docker-compose.prod.yml pull
+#   docker compose --env-file /etc/typease/compose.env -f docker-compose.prod.yml run --rm migrate
+#   docker compose --env-file /etc/typease/compose.env -f docker-compose.prod.yml up -d
+#   (scripts/deploy.sh does this in the right order with health gates: migrate -> api -> worker -> web)
+#
+# RECOMMENDED FOR REAL PRODUCTION: managed PostgreSQL (with point-in-time recovery), managed
+# Redis and a managed S3-compatible object store. The bundled postgres / redis / minio
+# services below are therefore OPT-IN profiles. To use managed services simply do not enable
+# the profile and put the provider's URLs into typease.env:
+#     DATABASE_URL / DATABASE_SYSTEM_URL / DATABASE_MIGRATION_URL (migrate.env), REDIS_URL,
+#     S3_ENDPOINT / S3_REGION / S3_BUCKET / S3_ACCESS_KEY_ID / S3_SECRET_ACCESS_KEY
+#
+# Profiles (COMPOSE_PROFILES in compose.env):
+#   bundled-postgres  bundled-redis  bundled-minio   data services on this host
+#   clamav            malware scanner (MALWARE_SCANNER=clamav, CLAMAV_HOST=clamav)
+#   n8n               automation engine
+#   monitoring        Prometheus, Alertmanager, Grafana, Loki, Alloy, exporters
+#
+# Secrets: NOT in this file and not in the repository. Each service reads only the env file
+# it needs from TYPEASE_ENV_DIR (default /etc/typease; chmod 600, owner root; templates in
+# infrastructure/deployment/env/). An env file on disk is the minimum acceptable; Docker
+# secrets / a secret manager (Vault, AWS Secrets Manager, SOPS-encrypted files) are better:
+# see docs/deployment/secrets.md.
+#
+# Networks:  edge (public: Caddy only)  -  app (application tier, outbound internet)  -
+#            data (internal: no route to the internet)  -  monitoring
+# Published ports: 80, 443 (Caddy). Nothing else.
+#
+# Validated with `docker compose config`; NOT started in the authoring workspace.
+# =============================================================================
+name: typease
+
+x-images:
+  postgres: &img-postgres postgres:16.11-bookworm
+  redis: &img-redis redis:7.4.2-alpine
+  minio: &img-minio minio/minio:RELEASE.2025-04-22T22-12-13Z
+  mc: &img-mc minio/mc:RELEASE.2025-04-16T18-13-26Z
+  clamav: &img-clamav clamav/clamav:1.4.3
+  n8n: &img-n8n n8nio/n8n:1.97.1
+  prometheus: &img-prometheus prom/prometheus:v3.4.1
+  alertmanager: &img-alertmanager prom/alertmanager:v0.28.1
+  grafana: &img-grafana grafana/grafana:11.6.0
+  loki: &img-loki grafana/loki:3.4.2
+  alloy: &img-alloy grafana/alloy:v1.8.1
+  postgres-exporter: &img-postgres-exporter quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+  redis-exporter: &img-redis-exporter oliver006/redis_exporter:v1.69.0
+  blackbox-exporter: &img-blackbox-exporter prom/blackbox-exporter:v0.26.0
+  node-exporter: &img-node-exporter prom/node-exporter:v1.9.1
+
+# Rotated container logs; "tag" lets the log shipper label each line with the container name.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+    tag: "{{.Name}}"
+
+x-hardening: &hardening
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop: [ALL]
+  logging: *logging
+
+x-web: &web
+  <<: *hardening
+  # Run-time configuration of the web apps' server code. NEXT_PUBLIC_* values are ALSO compiled
+  # into the images at build time (release.yml): keep both in step.
+  environment:
+    API_PUBLIC_URL: https://api.${TYPEASE_BASE_DOMAIN:?set TYPEASE_BASE_DOMAIN in compose.env}
+    NEXT_PUBLIC_API_URL: https://api.${TYPEASE_BASE_DOMAIN:?set TYPEASE_BASE_DOMAIN in compose.env}
+    NEXT_PUBLIC_STORAGE_ORIGINS: ${STORAGE_PUBLIC_ORIGINS:-}
+  read_only: true
+  tmpfs:
+    - /tmp:size=128m
+  networks: [app]
+  stop_grace_period: 20s
+  deploy:
+    replicas: ${WEB_REPLICAS:-1}
+    resources:
+      limits:
+        cpus: "1.0"
+        memory: 512M
+        pids: 256
+      reservations:
+        memory: 128M
+
+services:
+  # ===========================================================================
+  # Entry point
+  # ===========================================================================
+  caddy:
+    <<: *hardening
+    image: ${CADDY_IMAGE:-caddy:2.10.0-alpine}
+    cap_add: [NET_BIND_SERVICE]
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/caddy.env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infrastructure/docker/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ./infrastructure/docker/caddy/sites:/etc/caddy/sites:ro
+      - caddy-data:/data        # certificates and ACME account keys: persist and back up
+      - caddy-config:/config
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9180/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      edge:
+      app:
+        # Lets containers reach the bundled object store under its public name (presigned URLs).
+        aliases:
+          - s3.${TYPEASE_BASE_DOMAIN:?set TYPEASE_BASE_DOMAIN in compose.env}
+      monitoring:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  # ===========================================================================
+  # Application
+  # ===========================================================================
+
+  # Run-once. `docker compose run --rm migrate` before every release; `up` also runs it
+  # because the API waits for it to complete successfully.
+  migrate:
+    <<: *hardening
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-api:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+    restart: "no"
+    command: ["migrate"]
+    env_file:
+      # The runtime role URLs are needed too: the runner sets those roles' passwords from them.
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/typease.env
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/migrate.env
+    read_only: true
+    tmpfs:
+      - /tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+    networks: [app, data]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  api:
+    <<: *hardening
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-api:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+    command: ["api"]
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/typease.env
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m
+    volumes:
+      # Only used when STORAGE_DRIVER=local (not recommended): shared with the worker.
+      - storage-data:/data
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+        required: false
+      postgres:
+        condition: service_healthy
+        required: false
+    stop_grace_period: 30s
+    networks: [app, data]
+    deploy:
+      replicas: ${API_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1024M
+          pids: 512
+        reservations:
+          memory: 384M
+
+  worker:
+    <<: *hardening
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-worker:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+    command: ["worker"]
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/typease.env
+    environment:
+      NODE_ENV: production
+      WORKER_HEALTH_PORT: "4100"
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      # Must stay below stop_grace_period so running jobs can finish before Docker kills the container.
+      WORKER_SHUTDOWN_TIMEOUT_MS: "60000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    volumes:
+      - storage-data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+        required: false
+    # Give running jobs time to finish; BullMQ re-queues what is interrupted (handlers are idempotent).
+    stop_grace_period: 90s
+    networks: [app, data]
+    deploy:
+      replicas: ${WORKER_REPLICAS:-1}
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 1536M
+          pids: 512
+        reservations:
+          memory: 384M
+
+  centre-web:
+    <<: *web
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-centre-web${TYPEASE_WEB_IMAGE_SUFFIX:-}:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+
+  customer-web:
+    <<: *web
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-customer-web${TYPEASE_WEB_IMAGE_SUFFIX:-}:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+
+  corporate-portal:
+    <<: *web
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-corporate-portal${TYPEASE_WEB_IMAGE_SUFFIX:-}:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+
+  platform-admin:
+    <<: *web
+    image: ${TYPEASE_IMAGE_PREFIX:?set TYPEASE_IMAGE_PREFIX in compose.env}-platform-admin${TYPEASE_WEB_IMAGE_SUFFIX:-}:${TYPEASE_VERSION:?set TYPEASE_VERSION in compose.env}
+
+  # ===========================================================================
+  # Bundled data services (opt-in profiles; prefer managed services)
+  # ===========================================================================
+  postgres:
+    image: *img-postgres
+    profiles: [bundled-postgres]
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/postgres.env
+    command:
+      - postgres
+      - -c
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:-150}
+      - -c
+      - shared_buffers=${POSTGRES_SHARED_BUFFERS:-1GB}
+      - -c
+      - effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-3GB}
+      - -c
+      - wal_level=replica
+      - -c
+      - log_min_duration_statement=1000
+      - -c
+      - log_connections=on
+      - -c
+      - password_encryption=scram-sha-256
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$TYPEASE_DB_NAME\" -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    shm_size: 512mb
+    stop_grace_period: 60s
+    networks: [data]
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4096M
+
+  redis:
+    image: *img-redis
+    profiles: [bundled-redis]
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    user: redis                 # start as the unprivileged user (the entrypoint then has nothing to drop)
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/redis.env
+    # AOF persistence; noeviction is mandatory for BullMQ.
+    command:
+      - /bin/sh
+      - -c
+      - exec redis-server --requirepass "$$REDIS_PASSWORD" --appendonly yes --appendfsync everysec --maxmemory ${REDIS_MAXMEMORY:-512mb} --maxmemory-policy noeviction
+    read_only: true
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+    networks: [data]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+
+  minio:
+    image: *img-minio
+    profiles: [bundled-minio]
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/minio.env
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    # On `app` as well: Caddy proxies the public S3 host name (sites/minio.caddy) to it.
+    networks: [data, app]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2048M
+
+  minio-init:
+    image: *img-mc
+    profiles: [bundled-minio]
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/typease.env
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/minio.env
+    environment:
+      MINIO_URL: http://minio:9000
+      S3_VERSIONING: ${S3_VERSIONING:-true}
+    entrypoint: ["/bin/sh", "/config/init-buckets.sh"]
+    volumes:
+      - ./infrastructure/docker/minio:/config:ro
+    networks: [data]
+    logging: *logging
+
+  # ===========================================================================
+  # Optional services
+  # ===========================================================================
+  clamav:
+    image: *img-clamav
+    profiles: [clamav]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    # Needs outbound internet for signature updates (freshclam): application network.
+    networks: [app]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 3072M     # clamd holds the signature database in memory (and twice during a reload)
+
+  n8n:
+    image: *img-n8n
+    profiles: [n8n]
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/n8n.env
+    volumes:
+      - n8n-data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    # Not published. The editor is reached through an SSH tunnel or a protected Caddy site
+    # (sites/n8n.caddy.example); the API calls its webhooks at http://n8n:5678/webhook.
+    networks: [app]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+  # ===========================================================================
+  # Monitoring (profile: monitoring)   see infrastructure/monitoring/README.md
+  # ===========================================================================
+  prometheus:
+    image: *img-prometheus
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/monitoring.env
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        umask 077
+        printf '%s' "$$INTERNAL_API_TOKEN" > /tmp/internal_api_token
+        exec /bin/prometheus \
+          --config.file=/etc/prometheus/prometheus.yml \
+          --storage.tsdb.path=/prometheus \
+          --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d} \
+          --web.external-url=${PROMETHEUS_EXTERNAL_URL:-http://prometheus:9090}
+    volumes:
+      - ./infrastructure/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - ${PROMETHEUS_TARGETS_DIR:-./infrastructure/monitoring/prometheus/targets}:/etc/prometheus/targets:ro
+      - prometheus-data:/prometheus
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks: [app, monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+  alertmanager:
+    image: *img-alertmanager
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
+    volumes:
+      # Copy infrastructure/monitoring/alertmanager/alertmanager.yml next to the env files and
+      # add your receivers there (it contains webhook URLs / SMTP credentials).
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  grafana:
+    image: *img-grafana
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/monitoring.env
+    environment:
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_SECURITY_COOKIE_SECURE: "true"
+    volumes:
+      - ./infrastructure/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    # Not published: SSH tunnel or a protected Caddy site (sites/grafana.caddy.example).
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  loki:
+    image: *img-loki
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./infrastructure/monitoring/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+  alloy:
+    image: *img-alloy
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging: *logging
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./infrastructure/monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - alloy-data:/var/lib/alloy/data
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  postgres-exporter:
+    image: *img-postgres-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/monitoring.env
+    read_only: true
+    networks: [data, monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  redis-exporter:
+    image: *img-redis-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    env_file:
+      - ${TYPEASE_ENV_DIR:-/etc/typease}/monitoring.env
+    read_only: true
+    networks: [data, monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  blackbox-exporter:
+    image: *img-blackbox-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    command: ["--config.file=/etc/blackbox/blackbox.yml"]
+    volumes:
+      - ./infrastructure/monitoring/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    read_only: true
+    # app: probes the API inside the network; monitoring/edge route: probes the public URLs.
+    networks: [app, monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+  node-exporter:
+    image: *img-node-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    logging: *logging
+    command:
+      - --path.rootfs=/host
+      - --collector.textfile.directory=/textfile
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|run|var/lib/docker/.+)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+      # scripts/db-backup.sh writes typease_backup.prom here (BACKUP_METRICS_DIR).
+      - ${NODE_EXPORTER_TEXTFILE_DIR:-/var/backups/typease/metrics}:/textfile:ro
+    read_only: true
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+
+networks:
+  edge:
+    name: typease-edge
+  app:
+    name: typease-app
+  data:
+    name: typease-data
+    internal: true
+  monitoring:
+    name: typease-monitoring
+
+volumes:
+  caddy-data:
+  caddy-config:
+  storage-data:
+  postgres-data:
+  redis-data:
+  minio-data:
+  clamav-db:
+  n8n-data:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:
+  loki-data:
+  alloy-data:

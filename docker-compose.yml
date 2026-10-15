@@ -1,0 +1,593 @@
+# =============================================================================
+# TypEase - LOCAL DEVELOPMENT AND DEMO STACK
+#
+#   Everything, in containers (one command):
+#       docker compose --profile full up -d --build
+#       open http://app.typease.localhost   (staff)      http://admin.typease.localhost (platform)
+#            http://portal.typease.localhost (customers)  http://corporate.typease.localhost
+#            http://api.typease.localhost/api/docs        http://localhost:8025 (caught email)
+#
+#   Only the dependencies; run API / worker / web apps with pnpm on the host:
+#       docker compose --profile deps up -d
+#       (PostgreSQL :5432, Redis :6379, MinIO :9000/:9001, ClamAV :3310, Mailpit :1025/:8025, n8n :5678,
+#        all bound to 127.0.0.1 - see scripts/dev-up.sh and docs/DEPLOYMENT_GUIDE.md)
+#
+#   Add monitoring (Prometheus :9090, Grafana :3030, Loki, exporters):
+#       docker compose --profile full --profile monitoring up -d
+#
+# Secrets: none in this file. Development-only values are in infrastructure/docker/env/dev/*.env
+# (clearly marked, never valid for production). Production: docker-compose.prod.yml.
+#
+# This file was validated with `docker compose config`; it has NOT been started in the
+# authoring workspace (no Docker daemon there).
+# =============================================================================
+name: typease
+
+# ---- pinned third-party images (bump deliberately; pin by digest for production) ----
+x-images:
+  postgres: &img-postgres postgres:16.11-bookworm
+  redis: &img-redis redis:7.4.2-alpine
+  minio: &img-minio minio/minio:RELEASE.2025-04-22T22-12-13Z
+  mc: &img-mc minio/mc:RELEASE.2025-04-16T18-13-26Z
+  clamav: &img-clamav clamav/clamav:1.4.3
+  mailpit: &img-mailpit axllent/mailpit:v1.27.0
+  n8n: &img-n8n n8nio/n8n:1.97.1
+  caddy: &img-caddy caddy:2.10.0-alpine
+  prometheus: &img-prometheus prom/prometheus:v3.4.1
+  alertmanager: &img-alertmanager prom/alertmanager:v0.28.1
+  grafana: &img-grafana grafana/grafana:11.6.0
+  loki: &img-loki grafana/loki:3.4.2
+  alloy: &img-alloy grafana/alloy:v1.8.1
+  postgres-exporter: &img-postgres-exporter quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+  redis-exporter: &img-redis-exporter oliver006/redis_exporter:v1.69.0
+  blackbox-exporter: &img-blackbox-exporter prom/blackbox-exporter:v0.26.0
+  node-exporter: &img-node-exporter prom/node-exporter:v1.9.1
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+    tag: "{{.Name}}"
+
+x-build-args: &build-args
+  NODE_VERSION: ${NODE_VERSION:-22.22.0}
+  PNPM_VERSION: ${PNPM_VERSION:-10.28.0}
+
+# Shared settings of the API-image based services (api, migrate).
+x-backend: &backend
+  env_file:
+    - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/api.env
+  networks: [typease]
+  logging: *logging
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop: [ALL]
+
+# Read at run time by the web apps' server code (the NEXT_PUBLIC_* values are also compiled in).
+x-web-env: &web-env
+  API_PUBLIC_URL: ${NEXT_PUBLIC_API_URL:-http://api.typease.localhost}
+  NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api.typease.localhost}
+  NEXT_PUBLIC_STORAGE_ORIGINS: ${NEXT_PUBLIC_STORAGE_ORIGINS:-http://s3.typease.localhost}
+
+x-web: &web
+  networks: [typease]
+  logging: *logging
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs:
+    - /tmp
+
+services:
+  # ===========================================================================
+  # Dependencies  (--profile deps  or  --profile full)
+  # ===========================================================================
+  postgres:
+    image: *img-postgres
+    profiles: [deps, full]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/postgres.env
+    command:
+      - postgres
+      - -c
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:-100}
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - log_min_duration_statement=500
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      # The typease database only exists after the init script has finished.
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$TYPEASE_DB_NAME\" -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    shm_size: 256mb
+    networks: [typease]
+    logging: *logging
+
+  redis:
+    image: *img-redis
+    profiles: [deps, full]
+    restart: unless-stopped
+    # AOF: queued and delayed jobs survive a restart. noeviction: BullMQ must never lose keys silently.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [typease]
+    logging: *logging
+
+  minio:
+    image: *img-minio
+    profiles: [deps, full]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/minio.env
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - minio-data:/data
+    ports:
+      - "127.0.0.1:${MINIO_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks: [typease]
+    logging: *logging
+
+  # One-shot: buckets, lifecycle rule for incoming/, private-bucket check, application user.
+  minio-init:
+    image: *img-mc
+    profiles: [deps, full]
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/api.env
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/minio.env
+    environment:
+      MINIO_URL: http://minio:9000
+      S3_VERSIONING: ${S3_VERSIONING:-false}
+    entrypoint: ["/bin/sh", "/config/init-buckets.sh"]
+    volumes:
+      - ./infrastructure/docker/minio:/config:ro
+    networks: [typease]
+    logging: *logging
+
+  clamav:
+    image: *img-clamav
+    profiles: [deps, full]
+    restart: unless-stopped
+    volumes:
+      - clamav-db:/var/lib/clamav
+    ports:
+      - "127.0.0.1:${CLAMAV_PORT:-3310}:3310"
+    healthcheck:
+      # Provided by the image: answers once clamd has loaded the signature database
+      # (the first start downloads it - several minutes, needs internet access).
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    networks: [typease]
+    logging: *logging
+
+  mailpit:
+    image: *img-mailpit
+    profiles: [deps, full]
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "2000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+    networks: [typease]
+    logging: *logging
+
+  n8n:
+    image: *img-n8n
+    profiles: [deps, full]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/n8n.env
+    volumes:
+      - n8n-data:/home/node/.n8n
+    ports:
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:5678/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [typease]
+    logging: *logging
+
+  # ===========================================================================
+  # Application  (--profile full)
+  # ===========================================================================
+
+  # Run-once: applies pending SQL migrations as the schema owner and sets the passwords of
+  # typease_app / typease_system from DATABASE_URL / DATABASE_SYSTEM_URL, then exits.
+  migrate:
+    <<: *backend
+    image: typease/api:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+      args: *build-args
+    profiles: [full]
+    restart: "no"
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/api.env
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/migrate.env
+    command: ["migrate"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *backend
+    image: typease/api:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+      args: *build-args
+    profiles: [full]
+    restart: unless-stopped
+    command: ["api"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+      clamav:
+        condition: service_started
+    volumes:
+      - storage-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    # No published port: the API is reached through Caddy (http://api.typease.localhost).
+
+  worker:
+    <<: *backend
+    image: typease/worker:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/worker.Dockerfile
+      args: *build-args
+    profiles: [full]
+    restart: unless-stopped
+    command: ["worker"]
+    depends_on:
+      # The API refreshes reference data (permissions, plans, templates) on start.
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - storage-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  centre-web:
+    <<: *web
+    image: typease/centre-web:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+      args:
+        <<: *build-args
+        APP: centre-web
+        PORT: "3001"
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api.typease.localhost}
+        NEXT_PUBLIC_STORAGE_ORIGINS: ${NEXT_PUBLIC_STORAGE_ORIGINS:-http://s3.typease.localhost}
+        API_INTERNAL_URL: http://api:4000
+    environment: *web-env
+    profiles: [full]
+
+  customer-web:
+    <<: *web
+    image: typease/customer-web:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+      args:
+        <<: *build-args
+        APP: customer-web
+        PORT: "3002"
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api.typease.localhost}
+        NEXT_PUBLIC_STORAGE_ORIGINS: ${NEXT_PUBLIC_STORAGE_ORIGINS:-http://s3.typease.localhost}
+        API_INTERNAL_URL: http://api:4000
+    environment: *web-env
+    profiles: [full]
+
+  corporate-portal:
+    <<: *web
+    image: typease/corporate-portal:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+      args:
+        <<: *build-args
+        APP: corporate-portal
+        PORT: "3003"
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api.typease.localhost}
+        NEXT_PUBLIC_STORAGE_ORIGINS: ${NEXT_PUBLIC_STORAGE_ORIGINS:-http://s3.typease.localhost}
+        API_INTERNAL_URL: http://api:4000
+    environment: *web-env
+    profiles: [full]
+
+  platform-admin:
+    <<: *web
+    image: typease/platform-admin:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+      args:
+        <<: *build-args
+        APP: platform-admin
+        PORT: "3004"
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api.typease.localhost}
+        NEXT_PUBLIC_STORAGE_ORIGINS: ${NEXT_PUBLIC_STORAGE_ORIGINS:-http://s3.typease.localhost}
+        API_INTERNAL_URL: http://api:4000
+    environment: *web-env
+    profiles: [full]
+
+  # Single entry point. Plain HTTP in development (see infrastructure/docker/caddy/Caddyfile).
+  caddy:
+    image: *img-caddy
+    profiles: [full]
+    restart: unless-stopped
+    environment:
+      TYPEASE_BASE_DOMAIN: ${TYPEASE_BASE_DOMAIN:-typease.localhost}
+      HTTP_PORT: ${HTTP_PORT:-80}
+      UPLOAD_MAX_BODY: ${UPLOAD_MAX_BODY:-16MB}
+      # STORAGE_DRIVER=s3: logos are served from the public assets bucket (see the Caddyfile).
+      S3_PUBLIC_ASSETS_PROXY: ${S3_PUBLIC_ASSETS_PROXY:-true}
+      S3_PUBLIC_ASSETS_UPSTREAM: http://minio:9000
+      S3_PUBLIC_ASSETS_BUCKET: ${S3_PUBLIC_ASSETS_BUCKET:-typease-public-assets}
+    ports:
+      - "${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-80}:${HTTP_PORT:-80}"
+    volumes:
+      - ./infrastructure/docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      centre-web:
+        condition: service_started
+      customer-web:
+        condition: service_started
+      corporate-portal:
+        condition: service_started
+      platform-admin:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9180/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      typease:
+        # Containers must reach the public host names too (S3 presigned URLs, server-side
+        # rendering): inside the network they resolve to Caddy.
+        aliases:
+          - api.${TYPEASE_BASE_DOMAIN:-typease.localhost}
+          - app.${TYPEASE_BASE_DOMAIN:-typease.localhost}
+          - admin.${TYPEASE_BASE_DOMAIN:-typease.localhost}
+          - corporate.${TYPEASE_BASE_DOMAIN:-typease.localhost}
+          - portal.${TYPEASE_BASE_DOMAIN:-typease.localhost}
+          - s3.${TYPEASE_BASE_DOMAIN:-typease.localhost}
+    logging: *logging
+
+  # Demonstration data, on request only:  docker compose --profile seed run --rm seed
+  seed:
+    <<: *backend
+    image: typease/api-tools:${TYPEASE_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+      target: tools
+      args: *build-args
+    profiles: [seed]
+    restart: "no"
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/api.env
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/migrate.env
+    command: ["pnpm", "db:seed"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ===========================================================================
+  # Monitoring  (--profile monitoring)   see infrastructure/monitoring/README.md
+  # ===========================================================================
+  prometheus:
+    image: *img-prometheus
+    profiles: [monitoring]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/monitoring.env
+    # The scrape token is handed to Prometheus as a FILE (http_headers.files), so it never
+    # appears in the configuration page or in `docker inspect` of the command line.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        umask 077
+        printf '%s' "$$INTERNAL_API_TOKEN" > /tmp/internal_api_token
+        exec /bin/prometheus \
+          --config.file=/etc/prometheus/prometheus.yml \
+          --storage.tsdb.path=/prometheus \
+          --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d} \
+          --web.enable-lifecycle
+    volumes:
+      - ./infrastructure/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - ${PROMETHEUS_TARGETS_DIR:-./infrastructure/monitoring/prometheus/targets}:/etc/prometheus/targets:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    networks: [typease]
+    logging: *logging
+
+  alertmanager:
+    image: *img-alertmanager
+    profiles: [monitoring]
+    restart: unless-stopped
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
+    volumes:
+      - ./infrastructure/monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    networks: [typease]
+    logging: *logging
+
+  grafana:
+    image: *img-grafana
+    profiles: [monitoring]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/monitoring.env
+    environment:
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./infrastructure/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3030}:3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks: [typease]
+    logging: *logging
+
+  loki:
+    image: *img-loki
+    profiles: [monitoring]
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./infrastructure/monitoring/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    networks: [typease]
+    logging: *logging
+
+  # Log shipper: reads the json-file logs of every container on this host (no Docker socket).
+  alloy:
+    image: *img-alloy
+    profiles: [monitoring]
+    restart: unless-stopped
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    volumes:
+      - ./infrastructure/monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - alloy-data:/var/lib/alloy/data
+    depends_on:
+      - loki
+    networks: [typease]
+    logging: *logging
+
+  postgres-exporter:
+    image: *img-postgres-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/monitoring.env
+    networks: [typease]
+    logging: *logging
+
+  redis-exporter:
+    image: *img-redis-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    env_file:
+      - ${TYPEASE_ENV_DIR:-./infrastructure/docker/env/dev}/monitoring.env
+    networks: [typease]
+    logging: *logging
+
+  # Uptime checks (/health, /health/ready) and, in production, certificate expiry.
+  blackbox-exporter:
+    image: *img-blackbox-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    command: ["--config.file=/etc/blackbox/blackbox.yml"]
+    volumes:
+      - ./infrastructure/monitoring/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks: [typease]
+    logging: *logging
+
+  # Host metrics (disk, memory) and the backup freshness metric written by scripts/db-backup.sh.
+  node-exporter:
+    image: *img-node-exporter
+    profiles: [monitoring]
+    restart: unless-stopped
+    command:
+      - --path.rootfs=/host
+      - --collector.textfile.directory=/textfile
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|run|var/lib/docker/.+)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+      # A host directory in production (scripts/db-backup.sh writes typease_backup.prom there);
+      # an empty named volume by default so the dev stack starts anywhere.
+      - ${NODE_EXPORTER_TEXTFILE_DIR:-backup-metrics}:/textfile:ro
+    networks: [typease]
+    logging: *logging
+
+networks:
+  typease:
+    name: typease
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  clamav-db:
+  n8n-data:
+  storage-data:
+  caddy-data:
+  caddy-config:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:
+  loki-data:
+  alloy-data:
+  backup-metrics:

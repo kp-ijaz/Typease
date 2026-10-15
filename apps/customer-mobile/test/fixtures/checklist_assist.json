@@ -1,0 +1,71 @@
+{
+  "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+  "generatedAt": "2026-10-08T22:45:23.388Z",
+  "expiringWithinDays": 183,
+  "summary": {
+    "total": 3,
+    "missing": 1,
+    "rejected": 0,
+    "expired": 0,
+    "expiring": 0,
+    "unverified": 2,
+    "present": 0,
+    "waived": 0,
+    "processing": 0,
+    "mandatoryInputsProvided": true,
+    "missingMandatory": []
+  },
+  "items": [
+    {
+      "checklistItemId": "117fcc77-97a6-419a-874a-09f1082f66ce",
+      "documentTypeKey": "passport",
+      "label": "Passport copy (valid at least 6 months)",
+      "labelAr": "نسخة جواز السفر (صالح لمدة 6 أشهر على الأقل)",
+      "kind": "INPUT",
+      "isMandatory": true,
+      "checklistStatus": "UPLOADED",
+      "state": "UNVERIFIED",
+      "hint": "A document is attached but has not been verified by staff yet.",
+      "documentId": "df45bae0-cecf-4674-b247-471606cbfbaa",
+      "verificationStatus": "UNVERIFIED",
+      "expiryDate": "2030-01-01",
+      "expiryVerified": false,
+      "daysToExpiry": 1181,
+      "candidates": []
+    },
+    {
+      "checklistItemId": "2088801c-63c3-4158-9ae6-ba407fbd9fbf",
+      "documentTypeKey": "photo",
+      "label": "Personal photo, white background",
+      "labelAr": "صورة شخصية بخلفية بيضاء",
+      "kind": "INPUT",
+      "isMandatory": true,
+      "checklistStatus": "UPLOADED",
+      "state": "UNVERIFIED",
+      "hint": "A document is attached but has not been verified by staff yet.",
+      "documentId": "add15e9f-52e0-47af-ba73-0da2411aca24",
+      "verificationStatus": "UNVERIFIED",
+      "expiryDate": null,
+      "expiryVerified": false,
+      "daysToExpiry": null,
+      "candidates": []
+    },
+    {
+      "checklistItemId": "1c189e09-f65b-4e1a-853d-2a7892523d3c",
+      "documentTypeKey": "residence_visa",
+      "label": "Sponsor's residence visa",
+      "labelAr": "إقامة الكفيل",
+      "kind": "INPUT",
+      "isMandatory": false,
+      "checklistStatus": "MISSING",
+      "state": "MISSING",
+      "hint": "No document has been provided for this line yet.",
+      "documentId": null,
+      "verificationStatus": null,
+      "expiryDate": null,
+      "expiryVerified": null,
+      "daysToExpiry": null,
+      "candidates": []
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "id": "4bc86d75-c2c2-46fc-af72-f4aefb09b876",
+      "ticketNo": "TKT-000001",
+      "subject": "Where can I collect my documents?",
+      "category": "General",
+      "status": "RESOLVED",
+      "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+      "requestNo": "TE-000001",
+      "resolvedAt": "2026-10-08T22:47:37.237Z",
+      "closedAt": null,
+      "resolutionSummary": "Answered.",
+      "canReply": true,
+      "createdAt": "2026-10-08T22:47:37.043Z",
+      "updatedAt": "2026-10-08T22:47:37.238Z"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}

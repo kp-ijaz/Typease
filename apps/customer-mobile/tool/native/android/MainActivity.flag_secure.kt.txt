@@ -1,0 +1,23 @@
+// OPTIONAL hardening - NOT applied by the bootstrap script.
+//
+// Blocks screenshots, screen recording and the preview in the "recent apps" list on
+// Android. Useful because the app shows identity documents; the price is that
+// customers cannot take a screenshot for support either. Decide per deployment.
+//
+// To enable: replace the body of
+//   android/app/src/main/kotlin/<your/package/path>/MainActivity.kt
+// with the class below (keep the `package ...` line that Flutter generated).
+
+import android.os.Bundle
+import android.view.WindowManager
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE,
+        )
+    }
+}

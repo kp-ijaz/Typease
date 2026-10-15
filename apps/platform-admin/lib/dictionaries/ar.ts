@@ -1,0 +1,102 @@
+import type { Dictionary } from '@typease/ui/server';
+import { sectionsAr } from './sections';
+
+/** نصوص لوحة تحكم المنصة (موظفو TypEase). */
+export const ar: Dictionary = {
+  // يستبدل الصياغة المشتركة الموجّهة إلى موظفي المراكز.
+  session: { noPermissionDescription: 'دورك على المنصة لا يشمل هذا القسم. اطلب ذلك من مدير عام إن احتجت إليه.' },
+  app: {
+    title: 'لوحة تحكم منصة TypEase',
+    description: 'اللوحة الداخلية لـ TypEase: مراكز الطباعة والاشتراكات والباقات وحالة المنصة.',
+  },
+  nav: {
+    groups: { centres: 'مراكز الطباعة', platform: 'المنصة' },
+    dashboard: 'لوحة المعلومات',
+    tenants: 'المراكز',
+    subscriptions: 'الاشتراكات',
+    plans: 'الباقات',
+    coupons: 'القسائم',
+    support: 'الدعم',
+    access: 'طلبات الوصول',
+    integrations: 'التكاملات',
+    flags: 'مفاتيح الميزات',
+    fees: 'رسوم الجهات',
+    staff: 'الموظفون',
+    audit: 'التدقيق والأمان',
+    health: 'حالة النظام',
+  },
+  titles: {
+    tenantDetail: 'مركز',
+    coupons: 'القسائم',
+  },
+  auth: {
+    aside: {
+      headline: 'لوحة تحكم المنصة',
+      text: 'لموظفي TypEase. كل ما تفعله هنا يُسجَّل.',
+      points: {
+        mfa: { title: 'التحقق بخطوتين إلزامي', text: 'تُعِدّه عند أول تسجيل دخول.' },
+        access: { title: 'لا بيانات عملاء افتراضيًا', text: 'للاطلاع على بيانات مركز تطلب ذلك، والمركز هو من يقرر.' },
+      },
+    },
+    staffOnly: 'هذه اللوحة لموظفي TypEase. مراكز الطباعة تسجّل الدخول إلى مساحة عملها الخاصة.',
+  },
+  plans: {
+    title: 'الباقات',
+    description: 'تكلفة كل باقة وما تتضمنه. ترى المراكز الأرقام نفسها في صفحة التسجيل.',
+    coupons: 'القسائم',
+    caption: 'مقارنة الباقات',
+    feature: 'الباقة',
+    perMonth: '{amount} شهريًا',
+    perYear: '{amount} سنويًا',
+    saving: 'توفّر {amount}',
+    rows: {
+      monthly: 'السعر الشهري',
+      annual: 'السعر السنوي',
+      trial: 'الفترة التجريبية',
+    },
+    trialDays: {
+      zero: 'لا توجد',
+      one: 'يوم واحد',
+      two: 'يومان',
+      few: '{count} أيام',
+      many: '{count} يومًا',
+      other: '{count} يوم',
+    },
+    noTrial: 'لا توجد',
+    groups: { price: 'السعر', limits: 'الحدود', features: 'الميزات' },
+    limits: {
+      branches: 'الفروع',
+      staffUsers: 'حسابات الموظفين',
+      monthlyRequests: 'الطلبات شهريًا',
+      storageMb: 'تخزين المستندات',
+      aiPages: 'صفحات الذكاء الاصطناعي شهريًا',
+      notifications: 'الإشعارات شهريًا',
+      corporateClients: 'عملاء الشركات',
+    },
+    features: {
+      whiteLabel: 'علامة تجارية خاصة',
+      customDomains: 'نطاق خاص',
+      corporatePortal: 'بوابة الشركات',
+      automation: 'قواعد الأتمتة',
+      aiAssistant: 'المساعد الذكي',
+      scheduledReports: 'التقارير المجدولة',
+    },
+    unlimited: 'غير محدود',
+    notIncluded: 'غير متضمَّن',
+    included: 'متضمَّن',
+    empty: 'لا توجد باقات منشورة',
+    emptyText: 'لا تستطيع المراكز التسجيل قبل تفعيل باقة واحدة على الأقل.',
+    loadError: 'تعذّر تحميل الباقات.',
+  },
+  account: {
+    title: 'حسابي',
+    profileTitle: 'الملف الشخصي',
+    profileDescription: 'اسمك ولغة الرسائل التي نرسلها إليك.',
+    securityTitle: 'كلمة المرور والأمان',
+    securityDescription: 'كلمة المرور والتحقق بخطوتين والأجهزة المسجّل الدخول منها إلى حسابك.',
+    twoStep: 'التحقق بخطوتين',
+    role: 'الدور على المنصة',
+    roles: { SUPER_ADMIN: 'مدير عام', SUPPORT_AGENT: 'موظف دعم' },
+  },
+  ...sectionsAr,
+};

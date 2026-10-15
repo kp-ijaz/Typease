@@ -1,0 +1,53 @@
+# ONE place that maps the metric names exposed by the API to the stable names used by the
+# alert rules and the Grafana dashboard. If the API renames a metric, change it here only.
+#
+# Reconciled with the implementation BY READING THE SOURCE
+# (services/api/src/modules/platform/metrics.service.ts, route GET /api/v1/internal/metrics,
+# header x-internal-token). It has NOT been scraped by a real Prometheus yet: the API build
+# that was running in the authoring workspace predates the endpoint. After the first
+# deployment check with
+#   curl -H "x-internal-token: $TOKEN" http://api:4000/api/v1/internal/metrics
+#
+# Exposed by the API (all gauges, computed at scrape time from the database / queue):
+#   typease_process_uptime_seconds, typease_process_resident_memory_bytes, typease_process_heap_used_bytes
+#   typease_database_up, typease_queue_up{driver}
+#   typease_tenants{status}                                  status in lower case
+#   typease_outbox_pending, typease_outbox_processing, typease_outbox_failed, typease_outbox_oldest_pending_seconds
+#   typease_queue_jobs{state="waiting|active|delayed|failed"} "failed" = BullMQ failed set (dead letters)
+#   typease_notifications_failed                             notifications of the LAST HOUR that ended FAILED
+#   typease_notification_delivery_attempts_failed            failed provider attempts in the last hour
+#
+# `max` collapses the API replicas: these values come from the shared database / Redis, so
+# every replica reports the same number. Process metrics stay per instance.
+groups:
+  - name: typease-app-recording
+    interval: 30s
+    rules:
+      - record: typease:tenants
+        expr: max by (status) (typease_tenants)
+      - record: typease:outbox_pending
+        expr: max(typease_outbox_pending)
+      - record: typease:outbox_failed
+        expr: max(typease_outbox_failed)
+      - record: typease:outbox_oldest_pending_seconds
+        expr: max(typease_outbox_oldest_pending_seconds)
+      - record: typease:queue_waiting
+        expr: max(typease_queue_jobs{state="waiting"})
+      - record: typease:queue_active
+        expr: max(typease_queue_jobs{state="active"})
+      - record: typease:queue_delayed
+        expr: max(typease_queue_jobs{state="delayed"})
+      - record: typease:queue_failed
+        expr: max(typease_queue_jobs{state="failed"})
+      - record: typease:notifications_failed_last_hour
+        expr: max(typease_notifications_failed)
+      - record: typease:notification_attempts_failed_last_hour
+        expr: max(typease_notification_delivery_attempts_failed)
+      - record: typease:database_up
+        expr: min(typease_database_up)
+      - record: typease:queue_up
+        expr: min(typease_queue_up)
+      - record: typease:process_memory_bytes
+        expr: max by (instance) (typease_process_resident_memory_bytes)
+      - record: typease:process_uptime_seconds
+        expr: max by (instance) (typease_process_uptime_seconds)

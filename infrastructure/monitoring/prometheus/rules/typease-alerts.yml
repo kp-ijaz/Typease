@@ -1,0 +1,277 @@
+# TypEase alert rules. Application alerts use the names recorded in typease-recording.yml
+# (reconciled with the API's metrics implementation by reading its source; not yet evaluated
+# by a running Prometheus).
+# Severity: critical = wake somebody up; warning = handle during working hours.
+groups:
+  - name: typease-availability
+    rules:
+      - alert: TypeaseApiDown
+        expr: up{job="typease-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API replica {{ $labels.instance }} cannot be scraped"
+          description: "Prometheus has not been able to scrape /api/v1/internal/metrics for 2 minutes. If every replica is affected the platform is down; a 401 means the scrape token differs from INTERNAL_API_TOKEN."
+      - alert: TypeaseApiAbsent
+        expr: absent(up{job="typease-api"})
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "No API replica is registered"
+          description: "DNS discovery for the service name `api` returns no address: no API container is running."
+      - alert: TypeaseApiNotReady
+        expr: probe_success{job="blackbox-internal", instance=~".*/health/ready"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API readiness is failing"
+          description: "GET /health/ready has not returned 200 for 2 minutes: PostgreSQL (app or system role) or Redis is unreachable from the API. Check `curl http://api:4000/health/ready` for the failing dependency."
+      - alert: TypeaseApiNotLive
+        expr: probe_success{job="blackbox-internal", instance=~".*/health"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API liveness check is failing"
+      - alert: TypeaseWorkerDown
+        expr: probe_success{job="blackbox-internal", instance=~".*worker.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The background worker does not answer its health check"
+          description: "Queued jobs (notifications, document scans, reminders, outbox dispatch) are not being processed."
+      - alert: TypeasePublicEndpointDown
+        expr: probe_success{job="blackbox-public"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.instance }} is not reachable from outside"
+          description: "The public URL fails although the internal checks may be fine: DNS, firewall, certificate or reverse proxy."
+      - alert: TypeaseCertificateExpiresSoon
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-public"} - time()) < 14 * 86400
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Certificate of {{ $labels.instance }} expires in less than 14 days"
+          description: "Caddy renews certificates about 30 days before expiry. A certificate this close to expiry means renewal is failing: check the Caddy log for ACME errors (rate limits, DNS no longer pointing here, ask endpoint refusing the host)."
+      - alert: TypeaseCertificateExpiresVerySoon
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox-public"} - time()) < 3 * 86400
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Certificate of {{ $labels.instance }} expires in less than 3 days"
+      - alert: TypeaseProxyErrorRateHigh
+        expr: |
+          sum(rate(caddy_http_request_duration_seconds_count{code=~"5.."}[5m]))
+            / sum(rate(caddy_http_request_duration_seconds_count[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 5% of proxied requests answer 5xx"
+
+  - name: typease-application
+    rules:
+      - alert: TypeaseOutboxBacklogGrowing
+        expr: typease:outbox_pending > 100 and deriv(typease:outbox_pending[15m]) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox backlog is growing ({{ $value }} pending events)"
+          description: "Domain events are written faster than the worker dispatches them, or the worker is not running. Notifications, automations and reminders are delayed."
+      - alert: TypeaseOutboxStuck
+        expr: typease:outbox_oldest_pending_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The oldest outbox event has been waiting for {{ $value | humanizeDuration }}"
+          description: "Events should leave the outbox within seconds. Nothing is dispatching them: check that the worker runs and can reach PostgreSQL and Redis."
+      - alert: TypeaseOutboxFailedEvents
+        expr: typease:outbox_failed > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} outbox event(s) are in FAILED state"
+          description: "These events exhausted their retries and will not be delivered without intervention. Inspect outbox_events WHERE status = 'FAILED' (column `error`)."
+      - alert: TypeaseQueueFailedJobs
+        expr: typease:queue_failed > 0 and delta(typease:queue_failed[30m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Background jobs are failing ({{ $value }} in the failed set)"
+          description: "Jobs that exhausted their retries stay in the BullMQ failed set for 14 days. A growing number points at a broken provider (SMTP, SMS, ClamAV, object storage) or a bug."
+      - alert: TypeaseQueueBacklog
+        expr: typease:queue_waiting > 500
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} jobs are waiting in the queue"
+          description: "Increase the worker replicas or concurrency, or look for a slow job type."
+      - alert: TypeaseQueueStalled
+        expr: typease:queue_waiting > 0 and typease:queue_active == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Jobs are waiting but none is being processed"
+          description: "The worker is down or cannot reach Redis."
+      # The metric is a sliding count over the LAST HOUR (not a counter): compare, do not rate().
+      - alert: TypeaseNotificationFailures
+        expr: typease:notifications_failed_last_hour > 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} notifications failed in the last hour"
+          description: "Email / SMS / WhatsApp / push notifications ended as FAILED. A handful can be bad recipient addresses; a sustained number points at a provider outage or wrong credentials (console: notification delivery log)."
+      - alert: TypeaseDatabaseUnreachableFromApi
+        expr: typease:database_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "An API replica cannot query PostgreSQL with the system role"
+      - alert: TypeaseQueueUnreachableFromApi
+        expr: typease:queue_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "An API replica cannot reach the job queue (Redis)"
+          description: "Jobs cannot be queued: notifications, document scans and reminders are not scheduled."
+      - alert: TypeaseApiMemoryHigh
+        expr: typease:process_memory_bytes > 900 * 1024 * 1024
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API replica {{ $labels.instance }} uses more than 900 MiB"
+          description: "The container limit in docker-compose.prod.yml is 1024 MiB; the replica will be killed when it reaches it."
+      - alert: TypeaseApiRestarting
+        expr: resets(typease:process_uptime_seconds[30m]) > 2
+        labels:
+          severity: warning
+        annotations:
+          summary: "API replica {{ $labels.instance }} restarted more than twice in 30 minutes"
+
+  - name: typease-data-stores
+    rules:
+      - alert: TypeasePostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is not reachable by the exporter"
+      - alert: TypeasePostgresConnectionsHigh
+        expr: sum(pg_stat_activity_count) / max(pg_settings_max_connections) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL uses more than 80% of max_connections"
+          description: "Each API / worker process opens up to 2 x DATABASE_POOL_MAX connections. Lower the pool size, add a pooler or raise max_connections (docs/deployment/scaling.md)."
+      - alert: TypeasePostgresDeadlocks
+        expr: increase(pg_stat_database_deadlocks[10m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Deadlocks detected in database {{ $labels.datname }}"
+      - alert: TypeaseRedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is not reachable by the exporter"
+          description: "Rate limiting, caches and the job queue depend on Redis; /health/ready fails without it."
+      - alert: TypeaseRedisMemoryHigh
+        expr: redis_memory_max_bytes > 0 and redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis uses more than 85% of maxmemory"
+          description: "With maxmemory-policy noeviction (required by BullMQ) Redis rejects writes when it is full: new jobs cannot be queued."
+      - alert: TypeaseRedisRejectedConnections
+        expr: increase(redis_rejected_connections_total[5m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis rejected connections (maxclients reached)"
+
+  - name: typease-host
+    rules:
+      - alert: TypeaseDiskUsageHigh
+        expr: |
+          (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"}
+             / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"}) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.mountpoint }} is more than 85% full"
+          description: "PostgreSQL stops accepting writes when its volume is full. Check database growth, WAL, Docker images / logs and local backups."
+      - alert: TypeaseDiskWillFillIn24h
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs|nsfs"}[6h], 24 * 3600) < 0
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.mountpoint }} will be full within 24 hours at the current rate"
+      - alert: TypeaseHostMemoryLow
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Less than 10% of host memory is available"
+
+  - name: typease-backups
+    rules:
+      # typease_backup_last_success_timestamp_seconds is written by scripts/db-backup.sh into
+      # the node-exporter textfile directory after every SUCCESSFUL, ENCRYPTED backup.
+      - alert: TypeaseBackupTooOld
+        expr: time() - typease_backup_last_success_timestamp_seconds > 26 * 3600
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: "The last successful database backup is older than 26 hours"
+          description: "Run scripts/db-backup.sh by hand and read its output. Until it succeeds the recovery point is the previous backup."
+      - alert: TypeaseBackupMetricMissing
+        expr: absent(typease_backup_last_success_timestamp_seconds)
+        for: 2h
+        labels:
+          severity: warning
+        annotations:
+          summary: "No backup metric is exported"
+          description: "Either no backup has ever completed on this host, or node-exporter does not mount BACKUP_METRICS_DIR. With provider-managed backups, silence this alert and monitor the provider instead."
+      - alert: TypeaseBackupNotOffsite
+        expr: typease_backup_last_offsite == 0
+        for: 26h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database backups are not copied off the host"
+      - alert: TypeaseBackupShrunk
+        expr: typease_backup_last_size_bytes < 0.5 * avg_over_time(typease_backup_last_size_bytes[7d])
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "The latest backup is less than half the size of the 7-day average"
+          description: "A much smaller dump can mean missing data (wrong database, wrong role). Run a restore test."

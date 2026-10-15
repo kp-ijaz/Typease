@@ -1,0 +1,21 @@
+{
+  "name": "@typease/config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared build configuration for the TypEase web apps (Next.js, TypeScript, PostCSS).",
+  "type": "commonjs",
+  "files": [
+    "next.mjs",
+    "next.d.mts",
+    "security.mjs",
+    "security.d.mts",
+    "tsconfig.next.json",
+    "postcss.cjs"
+  ],
+  "scripts": {
+    "build": "node -e \"\"",
+    "typecheck": "node -e \"\"",
+    "lint": "eslint . --max-warnings=0",
+    "test": "node --test"
+  }
+}

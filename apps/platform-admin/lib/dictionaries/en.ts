@@ -1,0 +1,95 @@
+import type { Dictionary } from '@typease/ui/server';
+import { sectionsEn } from './sections';
+
+/** Strings of the platform console (TypEase staff). Every key must also exist in ar.ts. */
+export const en: Dictionary = {
+  // Overrides the shared wording, which speaks to centre staff ("ask your centre owner").
+  session: { noPermissionDescription: 'Your role on the platform does not include this area. Ask a super admin if you need it.' },
+  app: {
+    title: 'TypEase platform console',
+    description: 'Internal console of TypEase: typing centres, subscriptions, plans and platform health.',
+  },
+  nav: {
+    groups: { centres: 'Typing centres', platform: 'Platform' },
+    dashboard: 'Dashboard',
+    tenants: 'Centres',
+    subscriptions: 'Subscriptions',
+    plans: 'Plans',
+    coupons: 'Coupons',
+    support: 'Support',
+    access: 'Access requests',
+    integrations: 'Integrations',
+    flags: 'Feature flags',
+    fees: 'Authority fees',
+    staff: 'Staff',
+    audit: 'Audit & security',
+    health: 'System health',
+  },
+  titles: {
+    tenantDetail: 'Centre',
+    coupons: 'Coupons',
+  },
+  auth: {
+    aside: {
+      headline: 'Platform console',
+      text: 'For TypEase staff. Everything you do here is recorded.',
+      points: {
+        mfa: { title: 'Two-step verification is required', text: 'You set it up the first time you sign in.' },
+        access: { title: 'No customer data by default', text: 'To see a centre\u2019s data you ask, and the centre decides.' },
+      },
+    },
+    staffOnly: 'This console is for TypEase staff. Typing centres sign in to their own workspace.',
+  },
+  plans: {
+    title: 'Plans',
+    description: 'What each plan costs and includes. Centres see the same figures on the sign-up page.',
+    coupons: 'Coupons',
+    caption: 'Plans compared',
+    feature: 'Plan',
+    perMonth: '{amount} per month',
+    perYear: '{amount} per year',
+    saving: 'saves {amount}',
+    rows: {
+      monthly: 'Monthly price',
+      annual: 'Annual price',
+      trial: 'Free trial',
+    },
+    trialDays: { one: '{count} day', other: '{count} days' },
+    noTrial: 'None',
+    groups: { price: 'Price', limits: 'Limits', features: 'Features' },
+    limits: {
+      branches: 'Branches',
+      staffUsers: 'Staff users',
+      monthlyRequests: 'Requests per month',
+      storageMb: 'Document storage',
+      aiPages: 'AI pages per month',
+      notifications: 'Notifications per month',
+      corporateClients: 'Corporate clients',
+    },
+    features: {
+      whiteLabel: 'Own branding (white label)',
+      customDomains: 'Own domain',
+      corporatePortal: 'Corporate portal',
+      automation: 'Automation rules',
+      aiAssistant: 'AI assistant',
+      scheduledReports: 'Scheduled reports',
+    },
+    unlimited: 'Unlimited',
+    notIncluded: 'Not included',
+    included: 'Included',
+    empty: 'No plans are published',
+    emptyText: 'Centres cannot sign up until at least one plan is active.',
+    loadError: 'The plans could not be loaded.',
+  },
+  account: {
+    title: 'My account',
+    profileTitle: 'Profile',
+    profileDescription: 'Your name and the language of the messages we send you.',
+    securityTitle: 'Password and security',
+    securityDescription: 'Password, two-step verification and the devices signed in to your account.',
+    twoStep: 'Two-step verification',
+    role: 'Platform role',
+    roles: { SUPER_ADMIN: 'Super admin', SUPPORT_AGENT: 'Support agent' },
+  },
+  ...sectionsEn,
+};

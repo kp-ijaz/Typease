@@ -1,0 +1,21 @@
+# Only with the BUNDLED MinIO (profile bundled-minio). Copy to sites/minio.caddy.
+# Browsers upload and download documents through presigned URLs on S3_ENDPOINT, so the
+# S3 API needs a public HTTPS host name: s3.BASE (DNS: A/AAAA -> this server).
+# The MinIO console (:9001) is NOT published: reach it with an SSH tunnel.
+#
+# "s3" is not in the API's list of reserved centre slugs at the time of writing; this explicit
+# site always wins over a centre that would choose the slug "s3" (ask the API team to reserve it).
+s3.{$TYPEASE_BASE_DOMAIN} {
+	import access_log
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		-Server
+		defer
+	}
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	# No path or header rewriting: the request signature covers the Host header and the path.
+	reverse_proxy minio:9000
+}

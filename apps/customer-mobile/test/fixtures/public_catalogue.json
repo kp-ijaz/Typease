@@ -1,0 +1,168 @@
+{
+  "centre": {
+    "slug": "mobile-fixture",
+    "name": "Mobile Fixture Typing",
+    "currency": "AED"
+  },
+  "categories": [
+    {
+      "key": "typing",
+      "name": "Typing & Documentation",
+      "nameAr": "الطباعة والمستندات",
+      "icon": "file-text",
+      "serviceCount": 3
+    },
+    {
+      "key": "visa",
+      "name": "Visa Assistance",
+      "nameAr": "المساعدة في التأشيرات",
+      "icon": "plane",
+      "serviceCount": 2
+    },
+    {
+      "key": "residence",
+      "name": "Residence Assistance",
+      "nameAr": "المساعدة في الإقامة",
+      "icon": "home",
+      "serviceCount": 2
+    },
+    {
+      "key": "emirates-id",
+      "name": "Emirates ID Assistance",
+      "nameAr": "المساعدة في الهوية الإماراتية",
+      "icon": "id-card",
+      "serviceCount": 1
+    },
+    {
+      "key": "labour",
+      "name": "Labour & Employment Documents",
+      "nameAr": "مستندات العمل والتوظيف",
+      "icon": "briefcase",
+      "serviceCount": 1
+    },
+    {
+      "key": "business",
+      "name": "Business Setup Coordination",
+      "nameAr": "تنسيق تأسيس الأعمال",
+      "icon": "building",
+      "serviceCount": 1
+    },
+    {
+      "key": "pro",
+      "name": "PRO Services",
+      "nameAr": "خدمات المندوب",
+      "icon": "stamp",
+      "serviceCount": 1
+    },
+    {
+      "key": "attestation",
+      "name": "Attestation Coordination",
+      "nameAr": "تنسيق التصديق",
+      "icon": "badge-check",
+      "serviceCount": 1
+    },
+    {
+      "key": "translation",
+      "name": "Translation Coordination",
+      "nameAr": "تنسيق الترجمة",
+      "icon": "languages",
+      "serviceCount": 1
+    },
+    {
+      "key": "printing",
+      "name": "Printing & Scanning",
+      "nameAr": "الطباعة والمسح الضوئي",
+      "icon": "printer",
+      "serviceCount": 1
+    },
+    {
+      "key": "other",
+      "name": "Other Services",
+      "nameAr": "خدمات أخرى",
+      "icon": "star",
+      "serviceCount": 1
+    }
+  ],
+  "services": [
+    {
+      "id": "bc19ce5b-abb5-4b36-8e32-2dfc5e2070b3",
+      "name": "Express typing desk (while you wait)",
+      "nameAr": "مكتب الطباعة السريعة",
+      "description": "Short letters, forms and CVs typed at the counter in Deira while you wait.",
+      "descriptionAr": null,
+      "eligibilityGuidance": null,
+      "category": {
+        "key": "typing",
+        "name": "Typing & Documentation",
+        "nameAr": "الطباعة والمستندات",
+        "icon": "file-text"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 1,
+      "onlineAvailable": false,
+      "requiredDocuments": [
+        {
+          "label": "Draft or handwritten notes",
+          "labelAr": "مسودة أو ملاحظات مكتوبة",
+          "description": null,
+          "isMandatory": false
+        }
+      ],
+      "feeEstimate": {
+        "currency": "AED",
+        "serviceFee": "45.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxEstimate": "2.25",
+        "totalEstimate": "47.25",
+        "isEstimate": true
+      }
+    },
+    {
+      "id": "a57bf7b9-58b5-413a-9cde-19c0b7f3d9c0",
+      "name": "Tenancy contract typing",
+      "nameAr": "طباعة عقد الإيجار",
+      "description": "We type your tenancy contract from the details you provide and hand you a print-ready copy for signature.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "Bring the landlord and tenant identity documents and the property details. Registration of the contract with the relevant authority is not part of this service.",
+      "category": {
+        "key": "typing",
+        "name": "Typing & Documentation",
+        "nameAr": "الطباعة والمستندات",
+        "icon": "file-text"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 2,
+      "onlineAvailable": true,
+      "requiredDocuments": [
+        {
+          "label": "Tenant's Emirates ID",
+          "labelAr": "الهوية الإماراتية للمستأجر",
+          "description": null,
+          "isMandatory": true
+        },
+        {
+          "label": "Landlord's passport or Emirates ID copy",
+          "labelAr": "نسخة من جواز سفر أو هوية المؤجر",
+          "description": null,
+          "isMandatory": true
+        },
+        {
+          "label": "Title deed or previous contract",
+          "labelAr": "سند الملكية أو العقد السابق",
+          "description": null,
+          "isMandatory": false
+        }
+      ],
+      "feeEstimate": {
+        "currency": "AED",
+        "serviceFee": "75.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxEstimate": "3.75",
+        "totalEstimate": "78.75",
+        "isEstimate": true
+      }
+    }
+  ]
+}

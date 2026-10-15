@@ -1,0 +1,21 @@
+{
+  "name": "@typease/worker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypEase background worker (BullMQ consumer, job schedulers, outbox dispatcher). A thin launcher: the worker itself is built into @typease/api (src/worker.ts), because it runs the job handlers the API modules register.",
+  "main": "./dist/main.js",
+  "scripts": {
+    "dev": "pnpm --filter @typease/api exec node --watch --watch-path=src -r @swc-node/register src/worker.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0"
+  },
+  "dependencies": {
+    "@typease/api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.18.8",
+    "typescript": "5.9.3"
+  }
+}

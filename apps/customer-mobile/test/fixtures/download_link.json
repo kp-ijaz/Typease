@@ -1,0 +1,8 @@
+{
+  "url": "http://localhost:4000/api/v1/storage/local/download/signed-token-placeholder",
+  "expiresAt": "2026-10-08T22:47:23.374Z",
+  "filename": "passport.png",
+  "mime": "image/png",
+  "sizeBytes": 96,
+  "disposition": "attachment"
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Keys that tool/native/apply_native_config.py adds to ios/Runner/Info.plist.
+  A key that already exists in Info.plist is left untouched (the script says so).
+  @DEEP_LINK_SCHEME@ and @BUNDLE_URL_NAME@ are replaced by the script.
+-->
+<plist version="1.0">
+<dict>
+	<!-- image_picker: taking a photo of a document. Shown by iOS in the permission prompt. -->
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to photograph the documents you add to a request.</string>
+
+	<!-- image_picker: choosing an existing photo of a document. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Your photo library is used to choose pictures of the documents you add to a request.</string>
+
+	<!-- Custom URL scheme for deep links: typease://centre/<slug>, typease://requests/<id>, ... -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>@BUNDLE_URL_NAME@</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>@DEEP_LINK_SCHEME@</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Links are handled by the app_links plugin and the app's own router,
+	     not by Flutter's built-in deep-link handler. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
+
+	<!-- url_launcher: schemes the app may ask about before opening them. -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>tel</string>
+		<string>mailto</string>
+	</array>
+
+	<!-- Allows plain http to hosts on the local network ONLY (localhost, *.local, bare
+	     IP addresses on the LAN) so a simulator or test device can reach a local API.
+	     Everything else still requires https (App Transport Security stays on). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+</dict>
+</plist>

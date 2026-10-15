@@ -1,0 +1,49 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { Building2, Rocket, ShieldCheck, Zap } from 'lucide-react';
+import { AuthLayout, BrandLogo, useBranding, useI18n } from '@typease/ui';
+
+const POINTS = [
+  { key: 'faster', icon: Zap },
+  { key: 'secure', icon: ShieldCheck },
+  { key: 'built', icon: Building2 },
+  { key: 'grow', icon: Rocket },
+] as const;
+
+/** Signed-out frame of the staff app: brand panel beside the form on wide screens. */
+export function AuthShell({ children }: { children: React.ReactNode }) {
+  const { t, locale } = useI18n();
+  const { config, isWhiteLabel } = useBranding();
+  const pathname = usePathname();
+  return (
+    <AuthLayout
+      homeHref="/sign-in"
+      wide={pathname === '/sign-up'}
+      aside={
+        <>
+          <BrandLogo config={config} tone="onDark" size={40} locale={locale} />
+          <div className="max-w-md">
+            <p className="text-3xl font-semibold leading-tight">{t('auth.aside.headline')}</p>
+            <ul className="mt-10 space-y-6">
+              {POINTS.map(({ key, icon: Icon }) => (
+                <li key={key} className="flex gap-4">
+                  <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-foreground">
+                    <Icon className="size-5" />
+                  </span>
+                  <div>
+                    <p className="text-md font-semibold">{t(`auth.aside.points.${key}.title`)}</p>
+                    <p className="mt-0.5 text-base text-sidebar-muted">{t(`auth.aside.points.${key}.text`)}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-sm text-sidebar-muted">{isWhiteLabel ? (locale === 'ar' && config?.nameAr) || config?.name : t('auth.aside.tagline')}</p>
+        </>
+      }
+    >
+      {children}
+    </AuthLayout>
+  );
+}

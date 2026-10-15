@@ -1,0 +1,8 @@
+import { pageTitle } from '@/lib/metadata';
+import { Dashboard } from './dashboard';
+
+export const generateMetadata = () => pageTitle('nav.dashboard');
+
+export default function Page() {
+  return <Dashboard />;
+}

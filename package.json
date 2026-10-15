@@ -1,0 +1,53 @@
+{
+  "name": "typease",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypEase — Typing Made Easy. Multi-tenant, white-label typing centre management SaaS.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "db:generate": "pnpm --filter @typease/database generate",
+    "db:migrate": "pnpm --filter @typease/database migrate",
+    "db:seed": "pnpm --filter @typease/database seed",
+    "db:reset": "pnpm --filter @typease/database reset",
+    "build:packages": "pnpm --filter \"./packages/*\" --filter @typease/database run build",
+    "build:api": "pnpm --filter @typease/api build && pnpm --filter @typease/worker build",
+    "build:web": "pnpm --filter @typease/centre-web --filter @typease/customer-web --filter @typease/corporate-portal --filter @typease/platform-admin --workspace-concurrency=1 run build",
+    "build": "pnpm build:packages && pnpm build:api && pnpm build:web",
+    "dev:api": "pnpm --filter @typease/api dev",
+    "dev:worker": "pnpm --filter @typease/worker dev",
+    "dev:centre": "pnpm --filter @typease/centre-web dev",
+    "dev:customer": "pnpm --filter @typease/customer-web dev",
+    "dev:corporate": "pnpm --filter @typease/corporate-portal dev",
+    "dev:admin": "pnpm --filter @typease/platform-admin dev",
+    "typecheck": "pnpm -r --workspace-concurrency=1 run typecheck",
+    "lint": "pnpm lint:root && pnpm -r --workspace-concurrency=1 run lint",
+    "lint:root": "eslint scripts eslint.config.mjs --max-warnings=0",
+    "test": "pnpm test:unit && pnpm test:api",
+    "test:unit": "pnpm --filter \"./packages/*\" run test",
+    "test:api": "pnpm --filter @typease/api test",
+    "test:integration": "pnpm --filter @typease/tests test:integration",
+    "test:security": "pnpm --filter @typease/tests test:security",
+    "test:e2e": "pnpm --filter @typease/tests test:e2e",
+    "openapi": "pnpm --filter @typease/api openapi",
+    "check:production": "node scripts/production-readiness.mjs",
+    "check:infra": "bash scripts/validate-infra.sh",
+    "smoke": "bash scripts/smoke-test.sh",
+    "dev:up": "bash scripts/dev-up.sh",
+    "dev:down": "bash scripts/dev-down.sh",
+    "db:backup": "bash scripts/db-backup.sh",
+    "db:restore": "bash scripts/db-restore.sh",
+    "secrets:generate": "bash scripts/generate-secrets.sh"
+  },
+  "devDependencies": {
+    "eslint": "9.36.0",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "globals": "16.4.0",
+    "prettier": "3.6.2",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.45.0"
+  }
+}

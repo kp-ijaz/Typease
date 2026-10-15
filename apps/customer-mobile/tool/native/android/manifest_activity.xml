@@ -1,0 +1,14 @@
+            <!-- typease:begin activity (applied by tool/native/apply_native_config.py) -->
+            <!-- Links are handled by the app_links plugin and the app's own router
+                 (lib/core/routing/deep_links.dart), not by Flutter's built-in handler. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
+
+            <!-- Custom scheme: @DEEP_LINK_SCHEME@://centre/<slug>, @DEEP_LINK_SCHEME@://requests/<id>, ... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@DEEP_LINK_SCHEME@" />
+            </intent-filter>
+@APP_LINK_FILTERS@
+            <!-- typease:end activity -->

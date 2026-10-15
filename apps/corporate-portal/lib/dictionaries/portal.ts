@@ -1,0 +1,1115 @@
+import type { Dictionary } from '@typease/ui/server';
+
+/**
+ * Strings of the signed-in screens of the corporate portal, English and Arabic side by side.
+ * Everything here lives under the `my.` namespace: t('my.requests.search').
+ *
+ * Each text is written once as a pair [English, Arabic], so the two languages can never drift
+ * apart: `portalEn` and `portalAr` are derived from the same tree and always have exactly the same
+ * keys (also checked by packages/ui/src/i18n/apps.test.ts). A plural entry is written with
+ * `plural({ one, other }, { zero, one, two, few, many, other })`.
+ *
+ * Two kinds of people read these screens: a company's HR / PRO administrator, who acts for the
+ * whole company, and an employee signed in for their own requests. "You" must work for both;
+ * where it cannot, the key has a second form (`...Company` / `...Self`).
+ */
+type Pair = readonly [en: string, ar: string];
+interface PluralPair {
+  readonly __plural: readonly [Dictionary, Dictionary];
+}
+interface Tree {
+  readonly [key: string]: Pair | PluralPair | Tree;
+}
+const plural = (en: { one: string; other: string }, ar: { zero: string; one: string; two: string; few: string; many: string; other: string }): PluralPair => ({ __plural: [en, ar] });
+
+function side(tree: Tree, index: 0 | 1): Dictionary {
+  const out: Dictionary = {};
+  for (const [key, value] of Object.entries(tree)) {
+    if (Array.isArray(value)) out[key] = (value as unknown as Pair)[index];
+    else if ('__plural' in value) out[key] = (value as PluralPair).__plural[index];
+    else out[key] = side(value as Tree, index);
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ shared
+
+const common: Tree = {
+  you: ['You', 'أنت'],
+  yourCompany: ['Your company', 'شركتك'],
+  source: ['Source', 'المصدر'],
+  attachment: ['Attachment', 'مرفق'],
+  pdf: ['Download PDF', 'تنزيل PDF'],
+  noAccessTitle: ['This page is for your company’s administrators', 'هذه الصفحة خاصة بمسؤولي شركتك'],
+  noAccessText: ['Your login shows your own requests and documents only. Ask your company’s administrator if you need something from this page.', 'يعرض حسابك طلباتك ومستنداتك فقط. اطلب من مسؤول شركتك ما تحتاجه من هذه الصفحة.'],
+  backToOverview: ['Back to the overview', 'العودة إلى النظرة العامة'],
+  /** A person whose data was erased at their request: the record stays, the name does not. */
+  erasedPerson: ['Erased person', 'شخص محذوفة بياناته'],
+  erasedHint: ['This person’s data was erased at their request. The record is kept without a name and cannot be opened.', 'حُذفت بيانات هذا الشخص بناءً على طلبه. يُحتفظ بالسجل من دون اسم ولا يمكن فتحه.'],
+};
+
+const expiry: Tree = {
+  expired: ['Expired', 'منتهٍ'],
+  inDays: plural(
+    { one: 'in 1 day', other: 'in {count} days' },
+    { zero: 'اليوم', one: 'بعد يوم واحد', two: 'بعد يومين', few: 'بعد {count} أيام', many: 'بعد {count} يومًا', other: 'بعد {count} يوم' },
+  ),
+};
+
+// ------------------------------------------------------------------ requests
+
+const requests: Tree = {
+  mineTitle: ['My requests', 'طلباتي'],
+  mineText: ['Your requests with the centre, through your company, and their progress.', 'طلباتك لدى المركز عن طريق شركتك وسير كل منها.'],
+  /** An employee sees requests of the company about them, and personal ones made with a customer login. */
+  madeBy: {
+    company: ['Your company', 'شركتك'],
+    self: ['You (personal)', 'أنت (شخصي)'],
+  },
+  search: ['Search by request number', 'ابحث برقم الطلب'],
+  searchCompany: ['Search by request number or name', 'ابحث برقم الطلب أو بالاسم'],
+  emptyTitle: ['No requests yet', 'لا توجد طلبات بعد'],
+  mineEmptyTitle: ['You have no requests yet', 'ليست لديك طلبات بعد'],
+  emptyText: ['Choose a service to start the first one. It is saved as a draft and can be finished later.', 'اختر خدمة لبدء أول طلب. يُحفظ كمسودة ويمكن إكماله لاحقًا.'],
+  newFor: ['New request for {name}', 'طلب جديد لـ {name}'],
+  employeeFilter: ['Show requests of one employee', 'عرض طلبات موظف واحد'],
+  employeeAll: ['All employees', 'جميع الموظفين'],
+  employeeSearch: ['Search by name or employee number', 'ابحث بالاسم أو بالرقم الوظيفي'],
+  employeeNone: ['No employee matches.', 'لا يوجد موظف مطابق.'],
+  employeeEmptyTitle: ['No requests for {name} yet', 'لا توجد طلبات لـ {name} بعد'],
+  employeeEmptyText: ['When a request is made for this employee it appears here.', 'عند تقديم طلب لهذا الموظف يظهر هنا.'],
+  columns: {
+    service: ['Service', 'الخدمة'],
+    status: ['Status', 'الحالة'],
+    person: ['For', 'لصالح'],
+    madeBy: ['Billed to', 'تُحمَّل على'],
+    number: ['Request number', 'رقم الطلب'],
+    created: ['Requested', 'تاريخ الطلب'],
+    payment: ['Payment', 'الدفع'],
+  },
+  filter: {
+    label: ['Show', 'عرض'],
+    drafts: ['Drafts, not submitted', 'مسودات لم تُرسل'],
+    newRequests: ['Submitted, not yet reviewed', 'مُقدَّمة ولم تُراجَع بعد'],
+    pendingVerification: ['Documents being checked', 'المستندات قيد التدقيق'],
+    awaitingCustomer: ['Waiting for you', 'بانتظارك'],
+    awaitingPayment: ['Waiting for payment', 'بانتظار الدفع'],
+    readyForProcessing: ['Ready to be processed', 'جاهزة للتنفيذ'],
+    inProgress: ['Being processed', 'قيد التنفيذ'],
+    overdue: ['Later than promised', 'متأخرة عن الموعد'],
+    completed: ['Completed', 'مكتملة'],
+    cancelled: ['Cancelled', 'ملغاة'],
+  },
+};
+
+const form: Tree = {
+  prefilled: ['From the file – please check', 'من الملف – يُرجى التحقق'],
+  errors: {
+    number: ['Enter a number', 'أدخل رقمًا'],
+    format: ['This is not in the expected format', 'الصيغة غير صحيحة'],
+    chooseMin: ['Choose at least {count}', 'اختر {count} على الأقل'],
+    chooseMax: ['Choose at most {count}', 'اختر {count} على الأكثر'],
+  },
+};
+
+const price: Tree = {
+  title: ['Fees', 'الرسوم'],
+  total: ['Total', 'الإجمالي'],
+  fixedNote: ['The exact amount is in the quotation the centre sends before work starts.', 'المبلغ الدقيق يرد في عرض السعر الذي يرسله المركز قبل بدء العمل.'],
+  freeNote: ['There is no fee for this service.', 'لا توجد رسوم على هذه الخدمة.'],
+  policy: {
+    BEFORE_PROCESSING: ['Payment is due before the centre starts, unless your company has agreed payment terms.', 'يُستحق الدفع قبل أن يبدأ المركز العمل، ما لم تكن لشركتك شروط دفع متفق عليها.'],
+    DEPOSIT: [
+      'A deposit of {percent}% is due before the centre starts and the rest on completion, unless your company has agreed payment terms.',
+      'تُستحق دفعة مقدمة بنسبة {percent}% قبل أن يبدأ المركز العمل والباقي عند الاكتمال، ما لم تكن لشركتك شروط دفع متفق عليها.',
+    ],
+    AFTER_COMPLETION: ['Payment is due when the request is completed.', 'يُستحق الدفع عند اكتمال الطلب.'],
+  },
+};
+
+const next: Tree = {
+  title: ['What happens next', 'ماذا يحدث بعد ذلك'],
+  check: ['The centre checks the details and documents. If something is missing or unclear, it says exactly what.', 'يراجع المركز البيانات والمستندات. وإذا كان هناك شيء ناقص أو غير واضح يحدده بدقة.'],
+  quotation: ['The centre sends a quotation with the exact amount. Work starts after it is approved.', 'يرسل المركز عرض سعر بالمبلغ الدقيق. ويبدأ العمل بعد الموافقة عليه.'],
+  pay: {
+    BEFORE_PROCESSING: ['An invoice is issued. It is paid online or at the centre, or by its due date under your company’s payment terms.', 'تصدر فاتورة. تُدفع عبر الإنترنت أو في المركز، أو في تاريخ استحقاقها وفق شروط الدفع الخاصة بشركتك.'],
+    DEPOSIT: ['An invoice is issued. A deposit is paid first and the rest on completion, or everything by the due date under your company’s payment terms.', 'تصدر فاتورة. تُدفع دفعة مقدمة أولًا والباقي عند الاكتمال، أو يُدفع المبلغ كاملًا في تاريخ الاستحقاق وفق شروط الدفع الخاصة بشركتك.'],
+    AFTER_COMPLETION: ['The centre starts working on the request. The invoice is paid when it is completed.', 'يبدأ المركز العمل على الطلب، وتُدفع الفاتورة عند اكتماله.'],
+  },
+  quotationEmployee: ['The centre sends a quotation to your company. Your company’s administrator approves it; work starts after that.', 'يرسل المركز عرض سعر إلى شركتك. يوافق عليه مسؤول شركتك، ويبدأ العمل بعد ذلك.'],
+  payEmployee: {
+    BEFORE_PROCESSING: ['An invoice is issued to your company and paid by your company’s administrator before the centre starts.', 'تصدر فاتورة باسم شركتك ويدفعها مسؤول شركتك قبل أن يبدأ المركز العمل.'],
+    DEPOSIT: ['An invoice is issued to your company. Your company pays a deposit first and the rest on completion.', 'تصدر فاتورة باسم شركتك. تدفع شركتك دفعة مقدمة أولًا والباقي عند الاكتمال.'],
+    AFTER_COMPLETION: ['The centre starts working on the request. The invoice is issued to your company and paid when the request is completed.', 'يبدأ المركز العمل على الطلب. وتصدر الفاتورة باسم شركتك وتُدفع عند اكتمال الطلب.'],
+  },
+  work: {
+    DOCUMENT_PREPARATION_ONLY: ['The centre prepares and types the documents and hands them over. They are submitted to the authority by you.', 'يجهّز المركز المستندات ويطبعها ويسلّمها. وتقدّمونها أنتم إلى الجهة المختصة.'],
+    INFORMATIONAL_ONLY: ['The centre explains the requirements and helps to prepare. The application itself is made by you with the authority.', 'يوضّح المركز المتطلبات ويساعد في التحضير. أما الطلب نفسه فتقدّمونه أنتم لدى الجهة المختصة.'],
+    PARTNER_COORDINATION: ['The centre prepares the file and passes it to an authorised partner who handles the submission. Every update it receives is shown here.', 'يجهّز المركز الملف ويسلّمه إلى شريك معتمد يتولى التقديم. ويظهر هنا كل تحديث يصل المركز.'],
+    DIRECT_AUTHORISED: ['The centre prepares the file and submits it through the channels it is authorised to use. The authority decides.', 'يجهّز المركز الملف ويقدّمه عبر القنوات المصرّح له باستخدامها. والقرار للجهة المختصة.'],
+  },
+  follow: ['Every step can be followed here, and a notification is sent when something changes.', 'يمكن متابعة كل خطوة هنا، ويُرسل إشعار عند أي تغيير.'],
+};
+
+const service: Tree = {
+  categories: ['Browse by category', 'تصفح حسب الفئة'],
+  searchPlaceholder: ['Search services', 'ابحث في الخدمات'],
+  allCategories: ['All', 'الكل'],
+  emptyTitle: ['No service matches', 'لا توجد خدمة مطابقة'],
+  emptyText: ['Try another word or choose a different category.', 'جرّب كلمة أخرى أو اختر فئة مختلفة.'],
+  clear: ['Show all services', 'عرض جميع الخدمات'],
+  from: ['Estimated total', 'الإجمالي التقديري'],
+  free: ['No fee', 'بدون رسوم'],
+  estimate: ['estimate', 'تقديري'],
+  processing: ['Usual processing time', 'مدة الإنجاز المعتادة'],
+  hours: plural(
+    { one: '{count} hour', other: '{count} hours' },
+    { zero: 'أقل من ساعة', one: 'ساعة واحدة', two: 'ساعتان', few: '{count} ساعات', many: '{count} ساعة', other: '{count} ساعة' },
+  ),
+  days: plural(
+    { one: '{count} working day', other: '{count} working days' },
+    { zero: 'في اليوم نفسه', one: 'يوم عمل واحد', two: 'يوما عمل', few: '{count} أيام عمل', many: '{count} يوم عمل', other: '{count} يوم عمل' },
+  ),
+  documentsTitle: ['Documents needed', 'المستندات المطلوبة'],
+  documentsNone: ['No documents are needed to start.', 'لا تلزم أي مستندات للبدء.'],
+  mandatory: ['Required', 'مطلوب'],
+  optionalDoc: ['If available', 'إن وُجد'],
+  eligibility: ['Before you start', 'قبل أن تبدأ'],
+  feesTitle: ['Fees (estimate)', 'الرسوم (تقديرية)'],
+  feesNote: [
+    'Government and third-party fees are set by the authorities and can change. The final amount is in the quotation the centre sends before work starts.',
+    'تحدد الجهات المختصة الرسوم الحكومية ورسوم الأطراف الأخرى وقد تتغير. والمبلغ النهائي يرد في عرض السعر الذي يرسله المركز قبل بدء العمل.',
+  ],
+  serviceFee: ['Centre service fee', 'رسوم خدمة المركز'],
+  contractFee: ['Centre service fee (your contract price)', 'رسوم خدمة المركز (سعر عقد شركتك)'],
+  contractBadge: ['Contract price', 'سعر العقد'],
+  contractNote: ['Your company’s contract price replaces the centre’s list fee of {amount}.', 'يحل سعر عقد شركتك محل رسوم المركز المعلنة البالغة {amount}.'],
+  governmentFee: ['Government fees', 'الرسوم الحكومية'],
+  thirdPartyFee: ['Third-party fees', 'رسوم الأطراف الأخرى'],
+  tax: ['VAT', 'ضريبة القيمة المضافة'],
+  total: ['Estimated total', 'الإجمالي التقديري'],
+  centreOnly: ['This service is arranged at the centre. Contact the centre to start.', 'تُرتَّب هذه الخدمة في المركز. تواصل مع المركز للبدء.'],
+  capability: {
+    DOCUMENT_PREPARATION_ONLY: ['The centre prepares and types the documents. They are submitted to the authority by you; the centre does not submit on your behalf.', 'يجهّز المركز المستندات ويطبعها. وتقدّمونها أنتم إلى الجهة المختصة، ولا يقدّمها المركز نيابةً عنكم.'],
+    INFORMATIONAL_ONLY: ['The centre explains the requirements and helps to prepare. The application itself is made by you with the authority.', 'يوضّح المركز المتطلبات ويساعد في التحضير. أما الطلب نفسه فتقدّمونه أنتم لدى الجهة المختصة.'],
+    PARTNER_COORDINATION: ['The centre prepares the file and coordinates with an authorised partner who handles the submission.', 'يجهّز المركز الملف وينسّق مع شريك معتمد يتولى التقديم.'],
+    DIRECT_AUTHORISED: ['The centre prepares the file and submits it through the channels it is authorised to use.', 'يجهّز المركز الملف ويقدّمه عبر القنوات المصرّح له باستخدامها.'],
+  },
+  notFoundTitle: ['This service is not available', 'هذه الخدمة غير متاحة'],
+  notFoundText: ['It may have been removed or is not offered online.', 'ربما أُزيلت أو أنها غير متاحة عبر الإنترنت.'],
+};
+
+const wizard: Tree = {
+  intro: ['Choose a service, fill in the details and add your documents. Your progress is saved as a draft.', 'اختر الخدمة وأدخل البيانات وأضف مستنداتك. يُحفظ تقدمك كمسودة.'],
+  introCompany: ['Say who the request is for, choose the service, fill in the details and add the documents. Your progress is saved as a draft.', 'حدّد صاحب الطلب واختر الخدمة وأدخل البيانات وأضف المستندات. يُحفظ تقدمك كمسودة.'],
+  draftSaved: ['Draft {number}. Everything entered is saved; it can be finished later on any device.', 'المسودة {number}. يُحفظ كل ما يُدخل، ويمكن إكمالها لاحقًا من أي جهاز.'],
+  draftBadge: ['Draft', 'مسودة'],
+  draftMissingTitle: ['We could not find this draft', 'لم نعثر على هذه المسودة'],
+  draftMissingText: ['It may have been discarded or submitted already. Open it from the list of requests.', 'ربما حُذفت أو أُرسلت من قبل. افتحها من قائمة الطلبات.'],
+  alreadySubmittedTitle: ['This request was already submitted', 'تم إرسال هذا الطلب من قبل'],
+  alreadySubmittedText: ['Request {number} is with the centre. Open it to follow its progress.', 'الطلب {number} لدى المركز. افتحه لمتابعة سيره.'],
+  openRequest: ['Open the request', 'فتح الطلب'],
+  saveLater: ['Save and finish later', 'حفظ والإكمال لاحقًا'],
+  discard: ['Discard this draft', 'حذف هذه المسودة'],
+  discardTitle: ['Discard this draft?', 'هل تريد حذف هذه المسودة؟'],
+  discardText: ['Draft {number} is cancelled and what was entered is no longer used. This cannot be undone.', 'ستُلغى المسودة {number} ولن يُستخدم ما أُدخل فيها. لا يمكن التراجع عن ذلك.'],
+  discardReason: ['Draft discarded in the company portal', 'حُذفت المسودة من بوابة الشركات'],
+  discarded: ['Draft {number} discarded', 'تم حذف المسودة {number}'],
+  company: {
+    title: ['A request of your company, for you', 'طلب من شركتك لصالحك'],
+    text: [
+      'Your company’s contract prices apply. The centre sends the quotation to your company: your company’s administrator approves it and pays the invoice, and you follow the progress here. You will not see the amounts.',
+      'تنطبق أسعار عقد شركتك. يرسل المركز عرض السعر إلى شركتك: يوافق عليه مسؤول شركتك ويدفع الفاتورة، وتتابع أنت سير الطلب هنا. ولن تظهر لك المبالغ.',
+    ],
+  },
+  steps: {
+    who: ['For whom', 'صاحب الطلب'],
+    service: ['Service', 'الخدمة'],
+    details: ['Details', 'البيانات'],
+    documents: ['Documents', 'المستندات'],
+    review: ['Review', 'المراجعة'],
+  },
+  who: {
+    title: ['Who is this request for?', 'لمن هذا الطلب؟'],
+    text: ['One request is for one person. To request the same service for several employees, submit this one and start the next from the confirmation page.', 'كل طلب يخص شخصًا واحدًا. لطلب الخدمة نفسها لعدة موظفين، أرسل هذا الطلب ثم ابدأ التالي من صفحة التأكيد.'],
+    employee: ['An employee', 'أحد الموظفين'],
+    employeeHint: ['A visa, Emirates ID, labour card or another document of one person on your employee list.', 'تأشيرة أو هوية إماراتية أو بطاقة عمل أو مستند آخر يخص شخصًا واحدًا من قائمة موظفيك.'],
+    pick: ['Employee', 'الموظف'],
+    pickPlaceholder: ['Choose an employee', 'اختر موظفًا'],
+    pickRequired: ['Choose the employee this request is for.', 'اختر الموظف صاحب هذا الطلب.'],
+    notListed: ['Not on the list?', 'غير موجود في القائمة؟'],
+    addEmployee: ['Add the employee first', 'أضف الموظف أولًا'],
+    company: ['{name} itself', '{name} نفسها'],
+    companyShort: ['The company itself', 'الشركة نفسها'],
+    companyHint: ['A trade licence, an establishment card or another document of the company.', 'رخصة تجارية أو بطاقة منشأة أو مستند آخر يخص الشركة.'],
+    companyMissing: ['The centre has not set up a record for the company itself yet, so a request for the company cannot be started here. Ask the centre to add it.', 'لم ينشئ المركز بعد سجلًا للشركة نفسها، لذا لا يمكن بدء طلب للشركة من هنا. اطلب من المركز إضافته.'],
+    for: ['For', 'لصالح'],
+    change: ['Change', 'تغيير'],
+    chooseAgain: ['Choose someone else', 'اختيار شخص آخر'],
+    inactiveTitle: ['{name} is not an active employee', '{name} ليس موظفًا نشطًا'],
+    inactiveText: ['Requests can only be made for active employees. Reactivate the employee in the directory, or choose someone else.', 'لا تُقدَّم الطلبات إلا للموظفين النشطين. أعد تفعيل الموظف من قائمة الموظفين أو اختر شخصًا آخر.'],
+  },
+  service: {
+    title: ['Which service is needed?', 'ما الخدمة المطلوبة؟'],
+    noneTitle: ['No service can be requested online yet', 'لا توجد خدمات متاحة للطلب عبر الإنترنت بعد'],
+    noneText: ['Contact the centre to start a request.', 'تواصل مع المركز لبدء طلب.'],
+    other: ['Choose another service', 'اختيار خدمة أخرى'],
+    renewalTitle: ['Renewal', 'تجديد'],
+    renewalText: ['This request renews: {document} – {subject}, which expires on {date} according to the centre’s records.', 'هذا الطلب لتجديد: {document} – {subject}، وينتهي في {date} حسب سجلات المركز.'],
+    reuseNote: ['If a valid copy is already on file, it can be reused instead of uploading it again.', 'إذا كانت هناك نسخة سارية في الملف يمكن إعادة استخدامها بدل رفعها من جديد.'],
+    branch: ['Branch', 'الفرع'],
+    branchHint: ['The branch that handles the request and where documents are collected.', 'الفرع الذي يتولى الطلب وتُستلم منه المستندات.'],
+    start: ['Start this request', 'ابدأ هذا الطلب'],
+    startHint: ['Nothing is sent to the centre yet. Everything can be reviewed before it is submitted.', 'لن يُرسل شيء إلى المركز الآن. يمكن مراجعة كل شيء قبل الإرسال.'],
+  },
+  details: {
+    title: ['Details', 'البيانات'],
+    text: ['Fill in what the centre needs for this service. Fields marked * are required.', 'أدخل ما يحتاجه المركز لهذه الخدمة. الحقول المعلّمة بعلامة * مطلوبة.'],
+    savedAt: ['Saved at {time}', 'تم الحفظ {time}'],
+    noForm: ['This service needs no extra details. Add a note below if there is something the centre should know.', 'لا تحتاج هذه الخدمة إلى بيانات إضافية. أضف ملاحظة أدناه إن كان هناك ما يجب أن يعرفه المركز.'],
+    instructions: ['Anything else the centre should know?', 'هل هناك شيء آخر يجب أن يعرفه المركز؟'],
+    instructionsHint: ['For example who to call, or when the documents are needed.', 'مثلًا بمن يتصل المركز، أو متى تلزم المستندات.'],
+    incomplete: ['Some required details are missing or not valid. Please check the highlighted fields.', 'بعض البيانات المطلوبة ناقصة أو غير صحيحة. يُرجى مراجعة الحقول المحددة.'],
+  },
+  documents: {
+    title: ['Documents', 'المستندات'],
+    text: ['A scan or a clear photo is enough. Make sure the whole page is visible and readable.', 'تكفي نسخة ممسوحة أو صورة واضحة. تأكد من ظهور الصفحة كاملة وأنها مقروءة.'],
+    missing: plural(
+      {
+        one: '1 required document is still missing. You can continue and add it later, but the centre can only start once it has it.',
+        other: '{count} required documents are still missing. You can continue and add them later, but the centre can only start once it has them.',
+      },
+      {
+        zero: 'لا توجد مستندات مطلوبة ناقصة.',
+        one: 'ما زال مستند مطلوب واحد ناقصًا. يمكنك المتابعة وإضافته لاحقًا، لكن المركز لا يبدأ إلا بعد استلامه.',
+        two: 'ما زال مستندان مطلوبان ناقصين. يمكنك المتابعة وإضافتهما لاحقًا، لكن المركز لا يبدأ إلا بعد استلامهما.',
+        few: 'ما زالت {count} مستندات مطلوبة ناقصة. يمكنك المتابعة وإضافتها لاحقًا، لكن المركز لا يبدأ إلا بعد استلامها.',
+        many: 'ما زال {count} مستندًا مطلوبًا ناقصًا. يمكنك المتابعة وإضافتها لاحقًا، لكن المركز لا يبدأ إلا بعد استلامها.',
+        other: 'ما زال {count} مستند مطلوب ناقصًا. يمكنك المتابعة وإضافتها لاحقًا، لكن المركز لا يبدأ إلا بعد استلامها.',
+      },
+    ),
+  },
+  review: {
+    details: ['Details', 'البيانات'],
+    documents: ['Documents', 'المستندات'],
+    complete: ['Complete the details', 'إكمال البيانات'],
+    addDocuments: ['Add documents', 'إضافة المستندات'],
+    submit: ['Submit request', 'إرسال الطلب'],
+    confirm: ['By submitting you confirm that the details and documents are correct and yours to use.', 'بإرسالك الطلب تؤكد أن البيانات والمستندات صحيحة ويحق لك استخدامها.'],
+    confirmCompany: ['By submitting you confirm that the details and documents are correct and that your company is entitled to use them.', 'بإرسالك الطلب تؤكد أن البيانات والمستندات صحيحة وأن لشركتك الحق في استخدامها.'],
+    formInvalid: ['Some details are missing or not valid. Go back to the details step and check the highlighted fields.', 'بعض البيانات ناقصة أو غير صحيحة. عد إلى خطوة البيانات وراجع الحقول المحددة.'],
+  },
+  done: {
+    title: ['Request submitted', 'تم إرسال الطلب'],
+    text: ['The centre has received the request for {service} and will review it.', 'استلم المركز الطلب لخدمة {service} وسيراجعه.'],
+    textFor: ['The centre has received the request for {service} for {name} and will review it.', 'استلم المركز طلب خدمة {service} لصالح {name} وسيراجعه.'],
+    trackingCode: ['Tracking code', 'رمز التتبع'],
+    copyNumber: ['Copy request number', 'نسخ رقم الطلب'],
+    copyCode: ['Copy tracking code', 'نسخ رمز التتبع'],
+    codeHint: ['With the request number, this code shows the status on the centre’s public tracking page without signing in. It is shown only this once.', 'يعرض هذا الرمز مع رقم الطلب حالة الطلب في صفحة التتبع العامة للمركز دون تسجيل الدخول. ويظهر هذه المرة فقط.'],
+    another: ['Same service for another employee', 'الخدمة نفسها لموظف آخر'],
+    list: ['Back to my requests', 'العودة إلى طلباتي'],
+  },
+};
+
+const checklist: Tree = {
+  none: ['No documents are needed for this request.', 'لا يُطلب أي مستند لهذا الطلب.'],
+  optional: ['If available', 'إن وُجد'],
+  upload: ['Upload', 'رفع'],
+  uploadNew: ['Upload a new copy', 'رفع نسخة جديدة'],
+  replace: ['Replace', 'استبدال'],
+  reuse: ['Use this one', 'استخدام هذا المستند'],
+  reuseHint: ['A valid copy is already on file:', 'توجد نسخة سارية في الملف:'],
+  linked: ['{name}: document from the file attached', '{name}: تم إرفاق مستند من الملف'],
+  uploaded: ['{name} uploaded', 'تم رفع {name}'],
+  uploadedOn: ['Added {date}', 'أُضيف في {date}'],
+  validUntil: ['Valid until {date}', 'ساري حتى {date}'],
+  expiredOn: ['Expired on {date}', 'انتهى في {date}'],
+  uploadHint: ['Files are checked for viruses and stored encrypted. Only the staff working on the request can open them.', 'تُفحص الملفات ضد الفيروسات وتُحفظ مشفّرة. ولا يفتحها إلا الموظفون العاملون على الطلب.'],
+  scanning: ['Security check in progress. This takes a moment.', 'الفحص الأمني جارٍ. يستغرق ذلك لحظات.'],
+  blocked: ['This file was blocked by the security check and was not saved. Please upload another copy.', 'حُظر هذا الملف في الفحص الأمني ولم يُحفظ. يُرجى رفع نسخة أخرى.'],
+  rejectedTitle: ['The centre could not accept this document', 'تعذّر على المركز قبول هذا المستند'],
+  rejectedNoReason: ['Please upload a clearer or corrected copy.', 'يُرجى رفع نسخة أوضح أو مصحّحة.'],
+  removeTitle: ['Remove this document?', 'هل تريد إزالة هذا المستند؟'],
+  removeText: ['{name} is taken off this request. The file stays in the documents.', 'سيُزال {name} من هذا الطلب. ويبقى الملف ضمن المستندات.'],
+};
+
+const request: Tree = {
+  notFoundTitle: ['We could not find this request', 'لم نعثر على هذا الطلب'],
+  notFoundText: ['Check the link, or open the request from the list. Requests of other companies are never shown.', 'تحقق من الرابط أو افتح الطلب من القائمة. لا تُعرض طلبات الشركات الأخرى أبدًا.'],
+  notFoundTextSelf: ['Check the link, or open the request from your list. Only your own requests can be opened with your login.', 'تحقق من الرابط أو افتح الطلب من قائمتك. لا يفتح حسابك إلا طلباتك أنت.'],
+  forSubject: ['For', 'لصالح'],
+  submittedOn: ['Submitted {date}', 'أُرسل في {date}'],
+  startedOn: ['Started {date}', 'بدأ في {date}'],
+  completedOn: ['Completed', 'تاريخ الاكتمال'],
+  history: ['Progress so far', 'ما تم حتى الآن'],
+  tabs: {
+    overview: ['Overview', 'نظرة عامة'],
+    documents: ['Documents', 'المستندات'],
+    messages: ['Messages', 'الرسائل'],
+    details: ['Details', 'البيانات'],
+  },
+  waitingOn: {
+    CUSTOMER: ['Waiting for you', 'بانتظارك'],
+    COMPANY: ['Waiting for your company', 'بانتظار شركتك'],
+    CENTRE: ['The centre is working on it', 'المركز يعمل على الطلب'],
+    AUTHORITY: ['Waiting for the authority', 'بانتظار الجهة المختصة'],
+    NOBODY: ['Nothing more to do', 'لا يوجد إجراء مطلوب'],
+  },
+  next: {
+    DRAFT: ['Finish the details and submit the request.', 'أكمل البيانات وأرسل الطلب.'],
+    SUBMITTED: ['The centre has received the request and will review it.', 'استلم المركز الطلب وسيراجعه.'],
+    AWAITING_CUSTOMER: ['The centre needs something before it can continue.', 'يحتاج المركز إلى شيء قبل أن يتمكن من المتابعة.'],
+    UNDER_REVIEW: ['The documents are being checked.', 'المستندات قيد التدقيق.'],
+    QUOTED: ['The quotation is ready. Review and approve it so that work can start.', 'عرض السعر جاهز. راجعه ووافق عليه ليبدأ العمل.'],
+    AWAITING_PAYMENT: ['The invoice has to be paid before the centre starts processing.', 'يجب دفع الفاتورة قبل أن يبدأ المركز التنفيذ.'],
+    READY_FOR_PROCESSING: ['The request is queued for processing.', 'الطلب في قائمة التنفيذ.'],
+    IN_PREPARATION: ['The application is being prepared.', 'الطلب قيد التحضير.'],
+    PENDING_APPROVAL: ['The application is being prepared.', 'الطلب قيد التحضير.'],
+    READY_TO_SUBMIT: ['The application is ready to be submitted.', 'الطلب جاهز للتقديم.'],
+    EXTERNAL_PROCESSING: ['The application has been submitted and is being processed.', 'تم تقديم الطلب وهو قيد المعالجة.'],
+    RETURNED: ['The application was returned for correction. The centre is working on it.', 'أُعيد الطلب للتصحيح. يعمل المركز على ذلك.'],
+    REJECTED: ['The application was not accepted. The centre will be in touch about the next steps.', 'لم يُقبل الطلب. سيتواصل المركز بخصوص الخطوات التالية.'],
+    FINAL_REVIEW: ['Final checks before the documents are ready.', 'مراجعة نهائية قبل جاهزية المستندات.'],
+    COMPLETED: ['The request is complete.', 'اكتمل الطلب.'],
+    CANCELLED: ['This request was cancelled.', 'تم إلغاء هذا الطلب.'],
+  },
+  moneyElsewhere: {
+    QUOTED: ['The centre has sent a quotation to your company. Your company’s administrator approves it; there is nothing for you to do.', 'أرسل المركز عرض سعر إلى شركتك. يوافق عليه مسؤول شركتك، ولا يلزمك أي إجراء.'],
+    AWAITING_PAYMENT: ['An invoice has been issued to your company. Your company’s administrator arranges the payment; there is nothing for you to do.', 'صدرت فاتورة باسم شركتك. يتولى مسؤول شركتك ترتيب الدفع، ولا يلزمك أي إجراء.'],
+  },
+  update: ['Update from the centre', 'تحديث من المركز'],
+  centreSays: ['The centre wrote:', 'كتب المركز:'],
+  continueDraft: ['Continue the request', 'متابعة الطلب'],
+  reviewQuotation: ['Review the quotation', 'مراجعة عرض السعر'],
+  openInvoice: ['Open the invoice', 'فتح الفاتورة'],
+  fixDocuments: ['Go to the documents', 'الانتقال إلى المستندات'],
+  resubmit: ['Send back to the centre', 'إعادة الإرسال إلى المركز'],
+  resubmitHint: ['When what the centre asked for is done, send the request back so that work can continue.', 'بعد تنفيذ ما طلبه المركز، أعد إرسال الطلب ليستمر العمل.'],
+  resubmitted: ['Sent back to the centre', 'تمت إعادة الإرسال إلى المركز'],
+  blocked: {
+    REJECTED_DOCUMENTS_PENDING: ['Replace the documents that were not accepted first. Then the request can be sent back.', 'استبدل أولًا المستندات التي لم تُقبل، ثم يمكن إعادة إرسال الطلب.'],
+  },
+  completedDocuments: ['Completed documents', 'المستندات المكتملة'],
+  yourDocuments: ['Documents for this request', 'مستندات هذا الطلب'],
+  documentsHint: ['Upload what is missing. A scan or a clear photo is enough.', 'ارفع ما ينقص. تكفي نسخة ممسوحة أو صورة واضحة.'],
+  expectedBy: ['Expected by', 'متوقع بحلول'],
+  expectedHint: ['An estimate from the centre. Authorities decide their own timing.', 'تقدير من المركز. الجهات المختصة تحدد مواعيدها بنفسها.'],
+  cancelledOn: ['Cancelled', 'تاريخ الإلغاء'],
+  askSupport: ['Ask about this request', 'استفسار عن هذا الطلب'],
+  cancel: ['Cancel request', 'إلغاء الطلب'],
+  keep: ['Keep request', 'الإبقاء على الطلب'],
+  cancelTitle: ['Cancel this request?', 'هل تريد إلغاء هذا الطلب؟'],
+  cancelText: ['Request {number} is stopped. This cannot be undone; a new request would have to be started.', 'سيتوقف الطلب {number}. لا يمكن التراجع عن ذلك، وسيلزم بدء طلب جديد.'],
+  cancelReason: ['Why is it cancelled?', 'ما سبب الإلغاء؟'],
+  cancelReasonHint: ['The centre sees this.', 'يطّلع المركز على ذلك.'],
+  cancelPaid: ['Money has already been paid for this request. Cancelling does not refund by itself: the centre reviews what can be returned and gets in touch.', 'دُفع مبلغ مقابل هذا الطلب. الإلغاء لا يعيد المبلغ تلقائيًا: يراجع المركز ما يمكن استرداده ويتواصل معكم.'],
+  cancelNotAllowed: ['The centre has already started working on this request, so it cannot be cancelled here. Write to the centre in the Messages tab.', 'بدأ المركز العمل على هذا الطلب، لذا لا يمكن إلغاؤه من هنا. راسل المركز من تبويب الرسائل.'],
+  cancelled: ['Request {number} cancelled', 'تم إلغاء الطلب {number}'],
+  steps: {
+    title: ['Steps', 'الخطوات'],
+    now: ['In progress now', 'جارٍ الآن'],
+    skipped: ['Not needed', 'غير مطلوب'],
+  },
+  external: {
+    title: ['Status at the authority', 'الحالة لدى الجهة المختصة'],
+    text: ['What the centre knows about the application outside the centre. Each status says where it comes from.', 'ما يعرفه المركز عن الطلب خارج المركز. كل حالة تبيّن مصدرها.'],
+    authority: ['Authority', 'الجهة'],
+    reference: ['Reference number', 'الرقم المرجعي'],
+    channel: ['Submitted through', 'طريقة التقديم'],
+    recorded: ['Recorded', 'تاريخ التسجيل'],
+    noStatus: ['No status has been recorded yet.', 'لم تُسجَّل أي حالة بعد.'],
+    channels: {
+      MANUAL_PORTAL: ['The authority’s portal, by the centre’s staff', 'بوابة الجهة، عن طريق موظفي المركز'],
+      AUTHORISED_PARTNER: ['An authorised partner', 'شريك معتمد'],
+      OFFICIAL_API: ['An official connection to the authority', 'ربط رسمي مع الجهة'],
+    },
+    results: {
+      COMPLETED: ['Result: completed', 'النتيجة: مكتمل'],
+      RETURNED: ['Result: returned for correction', 'النتيجة: أُعيد للتصحيح'],
+      REJECTED: ['Result: not accepted', 'النتيجة: لم يُقبل'],
+    },
+  },
+  money: {
+    title: ['Quotation, approval and invoices', 'عرض السعر والموافقة والفواتير'],
+    hiddenText: ['The quotation and the invoice of this request are your company’s. Your company’s administrator approves and pays; you see where things stand.', 'عرض السعر وفاتورة هذا الطلب يخصان شركتك. مسؤول شركتك يوافق ويدفع، وترى أنت حالة الأمور.'],
+    invoiced: ['Invoiced', 'قيمة الفواتير'],
+    paid: ['Paid', 'المدفوع'],
+  },
+  messages: {
+    title: ['Messages with {centre}', 'الرسائل مع {centre}'],
+    text: ['Questions and answers about this request. The team answers during working hours.', 'أسئلة وأجوبة حول هذا الطلب. يجيب الفريق خلال ساعات العمل.'],
+    emptyTitle: ['No messages yet', 'لا توجد رسائل بعد'],
+    emptyText: ['Write to the centre if there is a question about this request.', 'راسل المركز إذا كان هناك سؤال عن هذا الطلب.'],
+    write: ['Your message', 'رسالتك'],
+    placeholder: ['Write your question or update…', 'اكتب سؤالك أو ما تريد إضافته…'],
+    send: ['Send message', 'إرسال الرسالة'],
+    sent: ['Message sent', 'تم إرسال الرسالة'],
+    closed: ['This request is closed for new messages. Use Support to contact the centre.', 'هذا الطلب مغلق أمام الرسائل الجديدة. استخدم الدعم للتواصل مع المركز.'],
+  },
+  details: {
+    title: ['What was entered', 'البيانات المُدخلة'],
+    none: ['This request has no extra details.', 'لا توجد بيانات إضافية لهذا الطلب.'],
+    edit: ['Edit the details', 'تعديل البيانات'],
+    editText: ['Correct what is wrong. The centre sees the new values at once.', 'صحّح ما هو خاطئ. يرى المركز القيم الجديدة فورًا.'],
+    saved: ['Details saved', 'تم حفظ البيانات'],
+    locked: ['The centre is working with these details. If something is wrong, write to the centre in the Messages tab.', 'يعمل المركز بهذه البيانات. إذا كان هناك خطأ راسل المركز من تبويب الرسائل.'],
+  },
+};
+
+// ------------------------------------------------------------------ documents
+
+const documents: Tree = {
+  mineTitle: ['My documents', 'مستنداتي'],
+  mineText: ['Documents you provided and documents the centre completed for you.', 'المستندات التي قدّمتها والمستندات التي أنجزها المركز لك.'],
+  search: ['Search by name', 'ابحث بالاسم'],
+  upload: ['Upload a document', 'رفع مستند'],
+  uploadText: ['Keep a document on your file so the centre can reuse it for your next request.', 'احفظ مستندًا في ملفك ليتمكن المركز من استخدامه في طلبك القادم.'],
+  uploadTextCompany: ['A document of the company itself, such as the trade licence. Documents of an employee are added to that employee’s request.', 'مستند يخص الشركة نفسها مثل الرخصة التجارية. أما مستندات الموظف فتُضاف إلى طلب ذلك الموظف.'],
+  whatIsIt: ['What kind of document is it?', 'ما نوع المستند؟'],
+  chooseTypeFirst: ['Choose the kind of document first.', 'اختر نوع المستند أولًا.'],
+  expiryDate: ['Expiry date', 'تاريخ الانتهاء'],
+  expiryHint: ['As printed on the document. The centre confirms it when it checks the document.', 'كما هو مطبوع على المستند. يؤكده المركز عند تدقيق المستند.'],
+  uploadedNote: ['Uploaded. The file is checked for viruses and then appears in the list.', 'تم الرفع. يُفحص الملف ضد الفيروسات ثم يظهر في القائمة.'],
+  uploadedToast: ['Document uploaded', 'تم رفع المستند'],
+  newVersion: ['Upload a new version', 'رفع نسخة جديدة'],
+  newVersionText: ['The new file replaces “{name}” once it has passed the security check. The centre checks it again.', 'يحل الملف الجديد محل «{name}» بعد اجتيازه الفحص الأمني. ويدققه المركز من جديد.'],
+  openRequest: ['Open the request', 'فتح الطلب'],
+  fromCentre: ['From the centre', 'من المركز'],
+  emptyTitle: ['No documents yet', 'لا توجد مستندات بعد'],
+  emptyText: ['Documents provided for requests and documents the centre completes for your company appear here.', 'تظهر هنا المستندات المقدَّمة للطلبات والمستندات التي ينجزها المركز لشركتك.'],
+  emptyTextSelf: ['Documents you provide and documents the centre completes for you appear here.', 'تظهر هنا المستندات التي تقدّمها والمستندات التي ينجزها المركز لك.'],
+  privacyNote: ['Download links work for a few minutes only and every access is recorded.', 'روابط التنزيل تعمل لدقائق معدودة فقط، ويُسجَّل كل وصول.'],
+  columns: {
+    title: ['Document', 'المستند'],
+    person: ['Whose', 'لمن'],
+    request: ['Request', 'الطلب'],
+    status: ['Status', 'الحالة'],
+    type: ['Type', 'النوع'],
+    expiry: ['Expires', 'ينتهي في'],
+    added: ['Added', 'تاريخ الإضافة'],
+  },
+};
+
+// ------------------------------------------------------------------ money
+
+const fees: Tree = {
+  groups: {
+    SERVICE_FEE: ['Centre service fees', 'رسوم خدمة المركز'],
+    GOVERNMENT_FEE: ['Government fees', 'الرسوم الحكومية'],
+    THIRD_PARTY_FEE: ['Third-party charges', 'رسوم الأطراف الأخرى'],
+  },
+  governmentNote: ['Collected on behalf of the relevant authority.', 'تُحصَّل نيابةً عن الجهة المختصة.'],
+  discount: ['Discount', 'خصم'],
+  discountIncluded: ['Discount included', 'الخصم المشمول'],
+  taxIncluded: ['VAT included', 'ضريبة القيمة المضافة المشمولة'],
+  total: ['Total', 'الإجمالي'],
+};
+
+const approvals: Tree = {
+  description: ['Quotations the centre has sent for your company’s requests. Work on a request starts after its quotation is approved.', 'عروض الأسعار التي أرسلها المركز لطلبات شركتك. يبدأ العمل على الطلب بعد الموافقة على عرض سعره.'],
+  tabs: { waiting: ['Waiting for a decision', 'بانتظار القرار'], history: ['All quotations', 'جميع عروض الأسعار'] },
+  waiting: ['Waiting for your decision', 'بانتظار قرارك'],
+  review: ['Review and decide', 'مراجعة واتخاذ القرار'],
+  forRequest: ['Request', 'الطلب'],
+  validUntil: ['Valid until {date}', 'ساري حتى {date}'],
+  emptyTitle: ['Nothing is waiting for approval', 'لا يوجد ما ينتظر الموافقة'],
+  emptyText: ['When the centre sends a quotation for one of your company’s requests, it appears here for a decision.', 'عندما يرسل المركز عرض سعر لأحد طلبات شركتك يظهر هنا لاتخاذ القرار.'],
+  historyEmptyTitle: ['No quotations yet', 'لا توجد عروض أسعار بعد'],
+  historyEmptyText: ['Quotations appear here once the centre has checked a request.', 'تظهر عروض الأسعار هنا بعد أن يراجع المركز الطلب.'],
+  search: ['Search by quotation number', 'ابحث برقم عرض السعر'],
+  notFoundTitle: ['We could not find this quotation', 'لم نعثر على عرض السعر'],
+  notFoundText: ['Check the link, or open the quotation from the list.', 'تحقق من الرابط أو افتح عرض السعر من القائمة.'],
+  columns: {
+    number: ['Quotation', 'عرض السعر'],
+    request: ['Request', 'الطلب'],
+    validUntil: ['Valid until', 'ساري حتى'],
+    sent: ['Sent', 'تاريخ الإرسال'],
+  },
+  status: {
+    SENT: ['Waiting for a decision', 'بانتظار القرار'],
+    APPROVED: ['Approved', 'تمت الموافقة'],
+    REJECTED: ['Declined', 'مرفوض'],
+    EXPIRED: ['Expired', 'منتهي الصلاحية'],
+  },
+  openText: ['Check the fees below. If your company agrees, approve the quotation so that the centre can continue.', 'راجع الرسوم أدناه. إذا وافقت شركتك، اعتمد عرض السعر ليتابع المركز العمل.'],
+  cannotDecide: ['This quotation is waiting for a decision by one of your company’s administrators.', 'ينتظر عرض السعر هذا قرار أحد مسؤولي شركتك.'],
+  notes: ['Note from the centre', 'ملاحظة من المركز'],
+  decided: ['Decided', 'تاريخ القرار'],
+  approve: ['Approve quotation', 'الموافقة على عرض السعر'],
+  approveHint: ['Approving creates an invoice for your company. Declining asks for a reason, which the centre sees.', 'الموافقة تُنشئ فاتورة على شركتك. والرفض يتطلب ذكر سبب يطّلع عليه المركز.'],
+  approveTitle: ['Approve this quotation?', 'هل توافق على عرض السعر؟'],
+  approveText: ['Your company accepts the total of {amount}. An invoice is issued for it and the centre continues with the request.', 'توافق شركتك على الإجمالي البالغ {amount}. وتصدر فاتورة بذلك ويتابع المركز العمل على الطلب.'],
+  approved: ['Quotation {number} approved', 'تمت الموافقة على عرض السعر {number}'],
+  approvedInvoice: ['Invoice {number} was issued.', 'صدرت الفاتورة {number}.'],
+  reject: ['Decline quotation', 'رفض عرض السعر'],
+  rejectTitle: ['Decline this quotation?', 'هل تريد رفض عرض السعر؟'],
+  rejectText: ['Tell the centre why, so that it can send a new quotation or get in touch.', 'أخبر المركز بالسبب ليرسل عرضًا جديدًا أو يتواصل معكم.'],
+  rejectReason: ['Reason', 'السبب'],
+  rejectReasonHint: ['For example: the price differs from our contract.', 'مثلًا: السعر يختلف عن عقدنا.'],
+  rejected: ['Quotation {number} declined', 'تم رفض عرض السعر {number}'],
+  rejectedTitle: ['Your company declined this quotation', 'رفضت شركتك عرض السعر هذا'],
+  expiredText: ['This quotation has expired. The centre will send a new one; write to the centre if it is needed sooner.', 'انتهت صلاحية عرض السعر هذا. سيرسل المركز عرضًا جديدًا، وراسل المركز إن احتجته أسرع.'],
+  supersededText: ['The centre replaced this quotation with a newer one. It is in the list.', 'استبدل المركز هذا العرض بعرض أحدث. تجده في القائمة.'],
+  cancelledText: ['The centre withdrew this quotation.', 'سحب المركز عرض السعر هذا.'],
+  invoiceTitle: ['Invoice {number}', 'الفاتورة {number}'],
+  invoiceDue: ['{amount} open.', 'المبلغ المفتوح {amount}.'],
+  invoicePaid: ['Nothing left to pay.', 'لا يوجد مبلغ متبقٍّ للدفع.'],
+  openInvoice: ['Open invoice', 'فتح الفاتورة'],
+};
+
+const invoices: Tree = {
+  tabs: { due: ['Open invoices', 'الفواتير المفتوحة'], all: ['All invoices', 'جميع الفواتير'] },
+  search: ['Search by invoice number', 'ابحث برقم الفاتورة'],
+  notFoundTitle: ['We could not find this invoice', 'لم نعثر على هذه الفاتورة'],
+  notFoundText: ['Check the link, or open the invoice from the list.', 'تحقق من الرابط أو افتح الفاتورة من القائمة.'],
+  toPay: ['To pay', 'المطلوب دفعه'],
+  overdue: ['Overdue', 'متأخرة'],
+  overdueDays: plural(
+    { one: '1 day overdue', other: '{count} days overdue' },
+    { zero: 'تستحق اليوم', one: 'متأخرة يومًا واحدًا', two: 'متأخرة يومين', few: 'متأخرة {count} أيام', many: 'متأخرة {count} يومًا', other: 'متأخرة {count} يوم' },
+  ),
+  issued: ['Issued', 'تاريخ الإصدار'],
+  issuedOn: ['Issued {date}', 'صدرت في {date}'],
+  due: ['Due', 'تاريخ الاستحقاق'],
+  dueOn: ['Due {date}', 'تستحق في {date}'],
+  paidOn: ['Paid on', 'تاريخ الدفع'],
+  payOtherwise: ['It can also be paid to {centre} by bank transfer, cheque or at the centre. Mention the invoice number.', 'يمكن أيضًا الدفع إلى {centre} بتحويل بنكي أو بشيك أو في المركز. اذكر رقم الفاتورة.'],
+  voidText: ['The centre cancelled this invoice. There is nothing to pay.', 'ألغى المركز هذه الفاتورة. لا يوجد ما يُدفع.'],
+  credited: ['Credited', 'المبلغ الدائن'],
+  refunded: ['Refunded', 'المبلغ المسترد'],
+  history: ['Payments', 'المدفوعات'],
+  noPayments: ['No payment has been received for this invoice yet.', 'لم يُستلم أي مبلغ عن هذه الفاتورة بعد.'],
+  creditNote: ['Credit note', 'إشعار دائن'],
+  receipt: ['Receipt', 'الإيصال'],
+  downloadReceipt: ['Download receipt', 'تنزيل الإيصال'],
+  nothingDueTitle: ['Nothing to pay', 'لا يوجد ما يُدفع'],
+  nothingDueText: ['Your company has no open invoices.', 'ليست لدى شركتك فواتير مفتوحة.'],
+  emptyTitle: ['No invoices yet', 'لا توجد فواتير بعد'],
+  emptyText: ['An invoice appears here when a quotation is approved.', 'تظهر الفاتورة هنا عند الموافقة على عرض سعر.'],
+  columns: { number: ['Invoice', 'الفاتورة'] },
+  status: {
+    ISSUED: ['Unpaid', 'غير مدفوعة'],
+    PARTIALLY_PAID: ['Partly paid', 'مدفوعة جزئيًا'],
+    PAID: ['Paid', 'مدفوعة'],
+    CREDITED: ['Credited', 'مُصدَر لها إشعار دائن'],
+    VOID: ['Cancelled', 'ملغاة'],
+  },
+  methods: {
+    CASH: ['Cash', 'نقدًا'],
+    CARD_POS: ['Card at the centre', 'بطاقة في المركز'],
+    BANK_TRANSFER: ['Bank transfer', 'تحويل بنكي'],
+    CHEQUE: ['Cheque', 'شيك'],
+    ONLINE_GATEWAY: ['Online payment', 'دفع إلكتروني'],
+  },
+};
+
+const statement: Tree = {
+  title: ['Statement', 'كشف الحساب'],
+  print: ['Print statement', 'طباعة كشف الحساب'],
+  outstanding: ['Outstanding balance', 'الرصيد المستحق'],
+  openCount: plural(
+    { one: '1 open invoice', other: '{count} open invoices' },
+    { zero: 'لا توجد فواتير مفتوحة', one: 'فاتورة مفتوحة واحدة', two: 'فاتورتان مفتوحتان', few: '{count} فواتير مفتوحة', many: '{count} فاتورة مفتوحة', other: '{count} فاتورة مفتوحة' },
+  ),
+  nothingOpen: ['No open invoices', 'لا توجد فواتير مفتوحة'],
+  asOf: ['as of {date}', 'حتى {date}'],
+  terms: ['Payment terms', 'شروط الدفع'],
+  noCredit: ['No credit terms are approved for your company: each invoice is due when it is issued.', 'لا توجد تسهيلات ائتمانية معتمدة لشركتك: تُستحق كل فاتورة عند إصدارها.'],
+  creditUsed: ['Credit limit used', 'المستخدم من الحد الائتماني'],
+  creditOf: ['{used} of {limit}', '{used} من {limit}'],
+  creditPercent: ['{percent}% of the credit limit is used', 'استُخدم {percent}% من الحد الائتماني'],
+  creditAvailable: ['{amount} still available', 'المتاح حاليًا {amount}'],
+  ageingTitle: ['Open balance by age', 'الرصيد المفتوح حسب العمر'],
+  ageing: {
+    current: ['Not yet due', 'لم تُستحق بعد'],
+    days1to30: ['1–30 days overdue', 'متأخرة 1–30 يومًا'],
+    days31to60: ['31–60 days overdue', 'متأخرة 31–60 يومًا'],
+    days61to90: ['61–90 days overdue', 'متأخرة 61–90 يومًا'],
+    days90plus: ['More than 90 days overdue', 'متأخرة أكثر من 90 يومًا'],
+  },
+};
+
+const pay: Tree = {
+  pay: ['Pay', 'ادفع'],
+  payOnline: ['Pay online', 'ادفع عبر الإنترنت'],
+  amount: ['Amount', 'المبلغ'],
+  failedTitle: ['The payment could not be started', 'تعذّر بدء عملية الدفع'],
+  offlineTitle: ['Online payment is not available', 'الدفع الإلكتروني غير متاح'],
+  offlineText: ['This centre does not take online payments at the moment. Pay by bank transfer or at the centre and mention the invoice number.', 'لا يقبل هذا المركز الدفع الإلكتروني حاليًا. ادفع بتحويل بنكي أو في المركز مع ذكر رقم الفاتورة.'],
+  test: {
+    title: ['Test payment', 'دفع تجريبي'],
+    description: ['Invoice {number}', 'الفاتورة {number}'],
+    notice: ['This centre uses the test payment provider. No money is taken and no card is needed.', 'يستخدم هذا المركز مزوّد الدفع التجريبي. لا يُخصم أي مبلغ ولا حاجة إلى بطاقة.'],
+    hint: ['The result is confirmed by the provider in the same way as a real payment.', 'يؤكد المزوّد النتيجة بالطريقة نفسها المتبعة في الدفع الحقيقي.'],
+    complete: ['Pay {amount} (test)', 'ادفع {amount} (تجريبي)'],
+    decline: ['Try a declined payment', 'تجربة دفع مرفوض'],
+    declinedReason: ['Declined in the test checkout', 'رُفض في صفحة الدفع التجريبية'],
+  },
+};
+
+const payReturn: Tree = {
+  title: ['Payment result', 'نتيجة الدفع'],
+  noPaymentTitle: ['We could not find this payment', 'لم نعثر على عملية الدفع'],
+  noPaymentText: ['Open the invoice to see whether it is paid.', 'افتح الفاتورة للتأكد من سدادها.'],
+  backToInvoice: ['Back to the invoice', 'العودة إلى الفاتورة'],
+  openRequest: ['Open the request', 'فتح الطلب'],
+  tryAgain: ['Try again', 'حاول مرة أخرى'],
+  checkAgain: ['Check again', 'تحقق مرة أخرى'],
+  waiting: {
+    title: ['Confirming the payment…', 'جارٍ تأكيد الدفع…'],
+    text: ['We are waiting for the confirmation of the payment provider. Please keep this page open.', 'ننتظر تأكيد مزوّد الدفع. يُرجى إبقاء هذه الصفحة مفتوحة.'],
+  },
+  paid: {
+    title: ['Payment received', 'تم استلام الدفع'],
+    text: ['Thank you. The receipt is ready and the centre has been told.', 'شكرًا لكم. الإيصال جاهز وقد أُبلغ المركز.'],
+  },
+  failed: {
+    title: ['The payment did not go through', 'لم تتم عملية الدفع'],
+    text: ['No money was taken. Try again from the invoice.', 'لم يُخصم أي مبلغ. حاول مجددًا من الفاتورة.'],
+    reason: ['The provider said:', 'ذكر المزوّد:'],
+  },
+  left: {
+    title: ['The payment was not completed', 'لم تكتمل عملية الدفع'],
+    text: ['The payment page was left before paying. Nothing was charged.', 'تمت مغادرة صفحة الدفع قبل إتمامه. لم يُخصم أي مبلغ.'],
+  },
+  unconfirmed: {
+    title: ['We have no confirmation yet', 'لم يصلنا التأكيد بعد'],
+    text: ['If the payment was completed, the confirmation can take a few minutes. Check again shortly; do not pay twice.', 'إذا اكتمل الدفع فقد يستغرق التأكيد بضع دقائق. تحقق مجددًا بعد قليل ولا تدفع مرتين.'],
+  },
+};
+
+// ------------------------------------------------------------------ reminders
+
+const reminders: Tree = {
+  mineText: ['Your documents that the centre tracks, and when they expire.', 'مستنداتك التي يتابعها المركز ومواعيد انتهائها.'],
+  search: ['Search by name or document', 'ابحث بالاسم أو بالمستند'],
+  emptyTitle: ['No expiry dates are tracked yet', 'لا توجد تواريخ انتهاء متابَعة بعد'],
+  emptyText: ['When the centre verifies a document with an expiry date (a visa, an Emirates ID, the trade licence), it is tracked here and your company is reminded before it runs out.', 'عندما يوثّق المركز مستندًا له تاريخ انتهاء (تأشيرة أو هوية إماراتية أو الرخصة التجارية) يُتابَع هنا وتُذكَّر شركتك قبل انتهائه.'],
+  emptyTextSelf: ['When the centre verifies one of your documents with an expiry date, it is tracked here and you are reminded before it runs out.', 'عندما يوثّق المركز أحد مستنداتك التي لها تاريخ انتهاء يُتابَع هنا وتُذكَّر قبل انتهائه.'],
+  stats: {
+    expired: ['Already expired', 'منتهية بالفعل'],
+    d30: ['Expire within 30 days', 'تنتهي خلال 30 يومًا'],
+    d60: ['Expire within 60 days', 'تنتهي خلال 60 يومًا'],
+    d90: ['Expire within 90 days', 'تنتهي خلال 90 يومًا'],
+  },
+  window: {
+    label: ['Expiry', 'الانتهاء'],
+    '30': ['Within 30 days', 'خلال 30 يومًا'],
+    '60': ['Within 60 days', 'خلال 60 يومًا'],
+    '90': ['Within 90 days', 'خلال 90 يومًا'],
+    expired: ['Already expired', 'منتهية بالفعل'],
+  },
+  expiresOn: ['Expires on {date}', 'ينتهي في {date}'],
+  expiredOn: ['Expired on {date}', 'انتهى في {date}'],
+  nextOn: ['Next reminder on {date}', 'التذكير القادم في {date}'],
+  renew: ['Start renewal', 'بدء التجديد'],
+  openRenewal: ['Open renewal request', 'فتح طلب التجديد'],
+  more: ['Showing the {shown} that expire first, of {total}.', 'تُعرض أقرب {shown} انتهاءً من أصل {total}.'],
+  note: ['Dates are according to the centre’s records. Check the document itself for the exact date.', 'التواريخ حسب سجلات المركز. راجع المستند نفسه للتأكد من التاريخ الدقيق.'],
+};
+
+// ------------------------------------------------------------------ notifications
+
+const notifications: Tree = {
+  mineText: ['Updates about your requests and documents.', 'تحديثات حول طلباتك ومستنداتك.'],
+  tabs: { inbox: ['Inbox', 'الوارد'], settings: ['How we contact you', 'طرق التواصل معك'] },
+  markAll: ['Mark all as read', 'تحديد الكل كمقروء'],
+  allRead: ['All notifications marked as read', 'تم تحديد جميع الإشعارات كمقروءة'],
+  unread: ['unread', 'غير مقروء'],
+  unreadOnly: ['Show unread only', 'عرض غير المقروء فقط'],
+  emptyTitle: ['No notifications yet', 'لا توجد إشعارات بعد'],
+  emptyText: ['Updates about your company’s requests, quotations, invoices and expiring documents appear here.', 'تظهر هنا التحديثات الخاصة بطلبات شركتك وعروض أسعارها وفواتيرها ومستنداتها التي تنتهي قريبًا.'],
+  emptyTextSelf: ['Updates about your requests and expiring documents appear here.', 'تظهر هنا التحديثات الخاصة بطلباتك ومستنداتك التي تنتهي قريبًا.'],
+  noUnreadTitle: ['You have read everything', 'قرأت كل شيء'],
+  noUnreadText: ['There are no unread notifications.', 'لا توجد إشعارات غير مقروءة.'],
+  settingsTitle: ['How should we tell you?', 'كيف نبلغك؟'],
+  settingsText: ['Choose how the centre may send you updates. This applies to your login only, not to your colleagues.', 'اختر كيف يرسل لك المركز التحديثات. يسري ذلك على حسابك فقط دون زملائك.'],
+  alwaysOn: ['Always on', 'مفعّل دائمًا'],
+  channelOn: ['{channel} switched on', 'تم تفعيل {channel}'],
+  channelOff: ['{channel} switched off', 'تم إيقاف {channel}'],
+  securityNote: ['Messages that protect your account (invitations, password reset, one-time codes) are always sent.', 'الرسائل التي تحمي حسابك (الدعوات، إعادة تعيين كلمة المرور، الرموز المؤقتة) تُرسل دائمًا.'],
+  channels: {
+    EMAIL: { name: ['Email', 'البريد الإلكتروني'], hint: ['To the email address of your login.', 'إلى البريد الإلكتروني الخاص بحسابك.'] },
+    SMS: { name: ['Text message (SMS)', 'الرسائل النصية'], hint: ['To your mobile number, where the centre has one for you.', 'إلى رقم هاتفك المتحرك إن كان مسجلًا لدى المركز.'] },
+    WHATSAPP: { name: ['WhatsApp', 'واتساب'], hint: ['To your mobile number, where the centre offers it.', 'إلى رقم هاتفك المتحرك حيثما يوفّر المركز ذلك.'] },
+    PUSH: { name: ['Mobile app notifications', 'إشعارات تطبيق الهاتف'], hint: ['On phones where you use the centre’s app.', 'على الهواتف التي تستخدم فيها تطبيق المركز.'] },
+    IN_APP: { name: ['Notifications in this portal', 'الإشعارات في هذه البوابة'], hint: ['The list you see under Notifications.', 'القائمة التي تراها في صفحة الإشعارات.'] },
+  },
+};
+
+// ------------------------------------------------------------------ support, feedback
+
+const support: Tree = {
+  description: ['Ask {centre} a question or report a problem. The answer appears here and you get a notification.', 'اطرح سؤالًا على {centre} أو أبلغ عن مشكلة. يظهر الرد هنا ويصلك إشعار به.'],
+  ask: ['Ask a question', 'اطرح سؤالًا'],
+  askText: ['The team of {centre} answers during working hours.', 'يجيب فريق {centre} خلال ساعات العمل.'],
+  send: ['Send question', 'إرسال السؤال'],
+  sent: ['Question {number} sent', 'تم إرسال السؤال {number}'],
+  sentText: ['{centre} will answer here. You get a notification when they do.', 'سيجيب {centre} هنا. ويصلك إشعار عند الرد.'],
+  waitingForYou: ['Waiting for your reply', 'بانتظار ردك'],
+  waitingText: ['The centre asked you something. Reply below so they can continue.', 'سألك المركز عن شيء. اكتب ردك أدناه ليتابع العمل.'],
+  emptyTitle: ['No questions yet', 'لا توجد أسئلة بعد'],
+  emptyText: ['Ask about a request, a document, an invoice or your account. You see the questions you asked yourself.', 'اسأل عن طلب أو مستند أو فاتورة أو عن حسابك. تظهر لك الأسئلة التي طرحتها أنت.'],
+  notFoundTitle: ['We could not find this conversation', 'لم نعثر على هذه المحادثة'],
+  notFoundText: ['Check the link, or open it from the support list. Conversations opened by a colleague are shown to that colleague only.', 'تحقق من الرابط أو افتحها من قائمة الدعم. المحادثات التي فتحها زميل لا تظهر إلا له.'],
+  openedOn: ['Asked {date}', 'طُرح في {date}'],
+  aboutRequest: ['About request', 'بخصوص الطلب'],
+  reply: ['Your reply', 'ردك'],
+  reopenHint: ['Sending a reply reopens the conversation.', 'إرسال رد يعيد فتح المحادثة.'],
+  attach: ['Add a file', 'إضافة ملف'],
+  sendReply: ['Send reply', 'إرسال الرد'],
+  replySent: ['Reply sent', 'تم إرسال الرد'],
+  resolvedTitle: ['The centre marked this as resolved', 'اعتبر المركز هذه المحادثة محلولة'],
+  resolvedText: ['If the problem is not solved, reply below and the conversation opens again.', 'إذا لم تُحل المشكلة فاكتب ردًا أدناه وستُفتح المحادثة من جديد.'],
+  closedTitle: ['This conversation is closed', 'هذه المحادثة مغلقة'],
+  cannotReply: ['This conversation is closed for replies. Ask a new question if you still need help.', 'لم تعد هذه المحادثة تقبل الردود. اطرح سؤالًا جديدًا إذا كنت ما زلت بحاجة إلى مساعدة.'],
+  columns: {
+    subject: ['Subject', 'الموضوع'],
+    number: ['Number', 'الرقم'],
+    category: ['Topic', 'الموضوع العام'],
+    updated: ['Last update', 'آخر تحديث'],
+  },
+  fields: {
+    subject: ['Subject', 'الموضوع'],
+    subjectHint: ['A few words, for example “When will the visa of Ravi Kumar be ready?”', 'بضع كلمات، مثلًا «متى تجهز تأشيرة رافي كومار؟»'],
+    category: ['Topic', 'الموضوع العام'],
+    request: ['About a request', 'بخصوص طلب'],
+    noRequest: ['Not about a request', 'لا يخص طلبًا'],
+    message: ['Your question', 'سؤالك'],
+    attachments: ['Files', 'الملفات'],
+  },
+  categories: {
+    request_status: ['Request status', 'حالة الطلب'],
+    documents: ['Documents', 'المستندات'],
+    invoices: ['Invoices and payment', 'الفواتير والدفع'],
+    employees: ['Employees', 'الموظفون'],
+    company_account: ['Company account', 'حساب الشركة'],
+    other: ['Other', 'أخرى'],
+  },
+};
+
+const feedback: Tree = {
+  title: ['How did we do?', 'ما رأيك في خدمتنا؟'],
+  text: ['Your rating helps the centre to improve.', 'تقييمك يساعد المركز على التحسّن.'],
+  yours: ['Your rating', 'تقييمك'],
+  comment: ['Anything you want to add?', 'هل تود إضافة شيء؟'],
+  send: ['Send rating', 'إرسال التقييم'],
+  sent: ['Thank you for your rating', 'شكرًا على تقييمك'],
+  stars: plural(
+    { one: '1 star out of 5', other: '{count} stars out of 5' },
+    { zero: 'بلا نجوم', one: 'نجمة واحدة من 5', two: 'نجمتان من 5', few: '{count} نجوم من 5', many: '{count} نجمة من 5', other: '{count} نجمة من 5' },
+  ),
+};
+
+// ------------------------------------------------------------------ employees
+
+const employees: Tree = {
+  search: ['Search by name, employee number or job title', 'ابحث بالاسم أو الرقم الوظيفي أو المسمى الوظيفي'],
+  add: ['Add employee', 'إضافة موظف'],
+  addText: ['Only the name is required. Passport and Emirates ID details save retyping them on every request.', 'الاسم فقط مطلوب. بيانات جواز السفر والهوية الإماراتية تغني عن إعادة كتابتها في كل طلب.'],
+  added: ['Employee added', 'تمت إضافة الموظف'],
+  addedLinked: ['{name} was already on file with the centre for your company and is now on your employee list.', '{name} مسجّل مسبقًا لدى المركز ضمن شركتك وأُضيف الآن إلى قائمة موظفيك.'],
+  editTitle: ['Edit employee', 'تعديل بيانات الموظف'],
+  editText: ['Correct the details the centre has on file for this employee.', 'صحّح البيانات المسجلة لدى المركز لهذا الموظف.'],
+  saved: ['Employee saved', 'تم حفظ بيانات الموظف'],
+  newRequest: ['New request for this employee', 'طلب جديد لهذا الموظف'],
+  inactive: ['Inactive', 'غير نشط'],
+  inactiveText: ['This employee is inactive: no new requests can be made for them and their portal access is switched off. Their history is kept.', 'هذا الموظف غير نشط: لا تُقدَّم له طلبات جديدة ودخوله إلى البوابة موقوف. ويُحتفظ بسجله.'],
+  deactivate: ['Deactivate employee', 'إلغاء تفعيل الموظف'],
+  deactivateTitle: ['Deactivate {name}?', 'هل تريد إلغاء تفعيل {name}؟'],
+  deactivateText: ['Use this when someone has left the company. They disappear from the active list; their requests and documents are kept. You can reactivate them later.', 'استخدم ذلك عند مغادرة الموظف للشركة. يختفي من القائمة النشطة ويُحتفظ بطلباته ومستنداته. ويمكن إعادة تفعيله لاحقًا.'],
+  deactivateTextLogin: ['Use this when someone has left the company. They disappear from the active list, their portal access is switched off at once, and their requests and documents are kept.', 'استخدم ذلك عند مغادرة الموظف للشركة. يختفي من القائمة النشطة ويُوقف دخوله إلى البوابة فورًا، ويُحتفظ بطلباته ومستنداته.'],
+  deactivated: ['Employee deactivated', 'تم إلغاء تفعيل الموظف'],
+  reactivate: ['Reactivate employee', 'إعادة تفعيل الموظف'],
+  reactivated: ['Employee reactivated', 'تمت إعادة تفعيل الموظف'],
+  emptyTitle: ['No employees yet', 'لا يوجد موظفون بعد'],
+  emptyText: ['Add the people your company requests documents for. Import a whole list from a spreadsheet, or add them one by one.', 'أضف الأشخاص الذين تطلب شركتك مستندات لهم. استورد قائمة كاملة من جدول بيانات أو أضفهم واحدًا واحدًا.'],
+  notFoundTitle: ['We could not find this employee', 'لم نعثر على هذا الموظف'],
+  notFoundText: ['Check the link, or open the employee from the directory.', 'تحقق من الرابط أو افتح الموظف من قائمة الموظفين.'],
+  privacyNote: ['Identity numbers are stored encrypted and shown masked. Only the people your company authorises can open this list.', 'تُحفظ أرقام الهوية مشفّرة وتُعرض مخفية جزئيًا. ولا يفتح هذه القائمة إلا من تفوّضهم شركتك.'],
+  columns: {
+    name: ['Name', 'الاسم'],
+    employeeNo: ['Employee no.', 'الرقم الوظيفي'],
+    login: ['Portal access', 'الدخول إلى البوابة'],
+  },
+  filter: {
+    label: ['Show', 'عرض'],
+    active: ['Active employees', 'الموظفون النشطون'],
+    inactive: ['Inactive employees', 'الموظفون غير النشطين'],
+    everyone: ['Everyone', 'الجميع'],
+  },
+  fields: {
+    fullName: ['Full name (English)', 'الاسم الكامل (بالإنجليزية)'],
+    fullNameHint: ['As in the passport.', 'كما في جواز السفر.'],
+    fullNameAr: ['Name in Arabic', 'الاسم بالعربية'],
+    employeeNo: ['Employee number', 'الرقم الوظيفي'],
+    employeeNoHint: ['Your company’s own staff number.', 'الرقم المعتمد لدى شركتك للموظف.'],
+    designation: ['Job title', 'المسمى الوظيفي'],
+    phone: ['Mobile number', 'رقم الهاتف المتحرك'],
+    email: ['Email', 'البريد الإلكتروني'],
+    emailHint: ['Needed if the employee should sign in to this portal.', 'يلزم إذا أُريد للموظف الدخول إلى هذه البوابة.'],
+    nationality: ['Nationality', 'الجنسية'],
+    dateOfBirth: ['Date of birth', 'تاريخ الميلاد'],
+    emiratesId: ['Emirates ID', 'الهوية الإماراتية'],
+    emiratesIdExpiry: ['Emirates ID expiry', 'تاريخ انتهاء الهوية الإماراتية'],
+    passportNo: ['Passport', 'جواز السفر'],
+    passportCountry: ['Passport issued by', 'جهة إصدار جواز السفر'],
+    passportExpiry: ['Passport expiry', 'تاريخ انتهاء جواز السفر'],
+  },
+  details: {
+    title: ['Personal details', 'البيانات الشخصية'],
+    added: ['On the list since', 'في القائمة منذ'],
+  },
+  identity: {
+    title: ['Identity documents', 'وثائق الهوية'],
+    addHint: ['Optional. The numbers are stored encrypted and are shown masked afterwards.', 'اختياري. تُحفظ الأرقام مشفّرة وتُعرض بعد ذلك مخفية جزئيًا.'],
+    editHint: ['Leave a number empty to keep the one on file. Type a new number only to replace it.', 'اترك حقل الرقم فارغًا للإبقاء على المسجّل. واكتب رقمًا جديدًا فقط لاستبداله.'],
+    maskedNote: ['Numbers are shown masked. The full numbers are available only to the centre’s authorised staff.', 'تُعرض الأرقام مخفية جزئيًا. الأرقام الكاملة متاحة فقط لموظفي المركز المصرّح لهم.'],
+    emiratesIdFormat: ['15 digits starting with 784.', '15 رقمًا تبدأ بـ 784.'],
+    newEmiratesId: ['New Emirates ID number', 'رقم الهوية الإماراتية الجديد'],
+    newPassportNo: ['New passport number', 'رقم جواز السفر الجديد'],
+    onFile: ['On file: {masked}', 'المسجّل: {masked}'],
+    notOnFile: ['Not on file', 'غير مسجّل'],
+    expires: ['Expires', 'ينتهي في'],
+    noExpiry: ['No expiry date on file', 'لا يوجد تاريخ انتهاء مسجّل'],
+  },
+  requests: {
+    title: ['Requests', 'الطلبات'],
+    all: ['All requests of this employee', 'جميع طلبات هذا الموظف'],
+    emptyTitle: ['No requests yet', 'لا توجد طلبات بعد'],
+    emptyText: ['Requests made for this employee appear here with their status.', 'تظهر هنا الطلبات المقدَّمة لهذا الموظف مع حالتها.'],
+  },
+  documents: {
+    title: ['Documents on file', 'المستندات المحفوظة'],
+    text: ['What was provided for this employee’s requests and what the centre completed for them.', 'ما قُدِّم لطلبات هذا الموظف وما أنجزه المركز له.'],
+    emptyTitle: ['No documents yet', 'لا توجد مستندات بعد'],
+    emptyText: ['Documents appear here when they are added to a request of this employee.', 'تظهر المستندات هنا عند إضافتها إلى طلب لهذا الموظف.'],
+  },
+  reminders: {
+    title: ['Expiry reminders', 'تذكيرات الانتهاء'],
+    all: ['All reminders', 'جميع التذكيرات'],
+    empty: ['No reminder is scheduled under this employee’s name.', 'لا يوجد تذكير مجدول باسم هذا الموظف.'],
+  },
+  login: {
+    title: ['Portal access', 'الدخول إلى البوابة'],
+    state: {
+      NONE: ['This employee cannot sign in. Invite them if they should follow their own requests here.', 'لا يستطيع هذا الموظف تسجيل الدخول. أرسل له دعوة إذا أُريد له متابعة طلباته هنا.'],
+      INVITED: ['An invitation was sent and has not been accepted yet.', 'أُرسلت دعوة ولم تُقبل بعد.'],
+      ACTIVE: ['Can sign in and sees only their own requests and documents: no other employees, no company invoices.', 'يستطيع تسجيل الدخول ولا يرى إلا طلباته ومستنداته: لا موظفين آخرين ولا فواتير الشركة.'],
+      SUSPENDED: ['The access is switched off. Invite the employee again to switch it back on.', 'الدخول موقوف. أرسل للموظف دعوة جديدة لإعادة تفعيله.'],
+    },
+    email: ['Sign-in email', 'بريد تسجيل الدخول'],
+    emailHint: ['The invitation is sent here. The employee signs in with this address.', 'تُرسل الدعوة إلى هذا العنوان. ويسجّل الموظف الدخول به.'],
+    otherHint: ['Sending to another address cancels the earlier invitation.', 'الإرسال إلى عنوان آخر يلغي الدعوة السابقة.'],
+    emailRequired: ['Enter the email address the invitation should go to.', 'أدخل البريد الإلكتروني الذي تُرسل إليه الدعوة.'],
+    emailInUse: ['This address already signs in to this portal for another person or role. Use a different address.', 'هذا العنوان مستخدم للدخول إلى هذه البوابة باسم شخص آخر أو بدور آخر. استخدم عنوانًا مختلفًا.'],
+    invitedAt: ['Invited', 'تاريخ الدعوة'],
+    joinedAt: ['Accepted', 'تاريخ القبول'],
+    lastLogin: ['Last sign-in', 'آخر تسجيل دخول'],
+    never: ['Not yet', 'لم يحدث بعد'],
+    invite: ['Invite to the portal', 'دعوة إلى البوابة'],
+    inviteAgain: ['Invite again', 'إرسال دعوة جديدة'],
+    inviteOther: ['Use another email address', 'استخدام بريد إلكتروني آخر'],
+    inviteTitle: ['Invite to the portal', 'دعوة إلى البوابة'],
+    inviteOtherTitle: ['Send the invitation to another address', 'إرسال الدعوة إلى عنوان آخر'],
+    inviteText: ['{name} gets an email with a link to choose a password. They will see only their own requests and documents.', 'يصل {name} بريد إلكتروني فيه رابط لاختيار كلمة مرور. ولن يرى إلا طلباته ومستنداته.'],
+    send: ['Send invitation', 'إرسال الدعوة'],
+    invited: ['Invitation sent', 'تم إرسال الدعوة'],
+    invitedTo: ['Sent to {email}.', 'أُرسلت إلى {email}.'],
+    sentTitle: ['Invitation sent', 'تم إرسال الدعوة'],
+    sentText: ['{name} was invited at {email}. The link in the email lets them choose a password.', 'تمت دعوة {name} على {email}. الرابط في البريد يتيح له اختيار كلمة مرور.'],
+    devLink: ['Open the invitation link', 'فتح رابط الدعوة'],
+    resend: ['Send the invitation again', 'إعادة إرسال الدعوة'],
+    resent: ['Invitation sent again', 'أُعيد إرسال الدعوة'],
+    withdraw: ['Withdraw invitation', 'سحب الدعوة'],
+    withdrawTitle: ['Withdraw the invitation of {name}?', 'هل تريد سحب دعوة {name}؟'],
+    withdrawText: ['The link in the email stops working. You can invite the employee again later.', 'يتوقف الرابط المرسل بالبريد عن العمل. ويمكنك دعوة الموظف من جديد لاحقًا.'],
+    withdrawn: ['Invitation withdrawn', 'تم سحب الدعوة'],
+    revoke: ['Remove portal access', 'إلغاء الدخول إلى البوابة'],
+    revokeTitle: ['Remove the portal access of {name}?', 'هل تريد إلغاء دخول {name} إلى البوابة؟'],
+    revokeText: ['They are signed out at once and can no longer sign in. Their requests and documents stay with your company. You can invite them again later.', 'يُسجَّل خروجه فورًا ولن يتمكن من الدخول بعد ذلك. وتبقى طلباته ومستنداته لدى شركتك. ويمكنك دعوته من جديد لاحقًا.'],
+    revoked: ['Portal access removed', 'تم إلغاء الدخول إلى البوابة'],
+  },
+  import: {
+    open: ['Import a list', 'استيراد قائمة'],
+    title: ['Import employees', 'استيراد الموظفين'],
+    text: ['Copy the rows from your spreadsheet and paste them below. Nothing is saved until every row is correct.', 'انسخ الصفوف من جدول البيانات والصقها أدناه. لا يُحفظ شيء حتى تصبح جميع الصفوف صحيحة.'],
+    paste: ['Rows from your spreadsheet', 'الصفوف من جدول البيانات'],
+    hint: ['One employee per row, columns in this order: {columns}. Only the name is required. Up to {max} rows at a time.', 'موظف واحد في كل صف، والأعمدة بهذا الترتيب: {columns}. الاسم فقط مطلوب. بحد أقصى {max} صف في المرة الواحدة.'],
+    preview: ['Check before saving', 'راجع قبل الحفظ'],
+    check: ['Result', 'النتيجة'],
+    ok: ['Ready', 'جاهز'],
+    rows: plural(
+      { one: '1 row', other: '{count} rows' },
+      { zero: 'لا صفوف', one: 'صف واحد', two: 'صفان', few: '{count} صفوف', many: '{count} صفًا', other: '{count} صف' },
+    ),
+    invalid: plural(
+      { one: '1 needs correcting', other: '{count} need correcting' },
+      { zero: 'لا أخطاء', one: 'صف واحد يحتاج إلى تصحيح', two: 'صفان يحتاجان إلى تصحيح', few: '{count} صفوف تحتاج إلى تصحيح', many: '{count} صفًا يحتاج إلى تصحيح', other: '{count} صف يحتاج إلى تصحيح' },
+    ),
+    tooManyColumns: ['There are more columns than expected.', 'عدد الأعمدة أكبر من المتوقع.'],
+    tooMany: ['At most {max} employees can be imported at a time. Split the list.', 'يمكن استيراد {max} موظف كحد أقصى في المرة الواحدة. قسّم القائمة.'],
+    rejected: ['The centre’s system did not accept some rows. Correct them and try again; nothing was saved.', 'لم يقبل نظام المركز بعض الصفوف. صحّحها وحاول مجددًا؛ لم يُحفظ شيء.'],
+    submit: plural(
+      { one: 'Add 1 employee', other: 'Add {count} employees' },
+      { zero: 'إضافة', one: 'إضافة موظف واحد', two: 'إضافة موظفَين', few: 'إضافة {count} موظفين', many: 'إضافة {count} موظفًا', other: 'إضافة {count} موظف' },
+    ),
+    submitEmpty: ['Add employees', 'إضافة الموظفين'],
+    done: plural(
+      { one: '1 employee added', other: '{count} employees added' },
+      { zero: 'لم يُضف أي موظف', one: 'تمت إضافة موظف واحد', two: 'تمت إضافة موظفَين', few: 'تمت إضافة {count} موظفين', many: 'تمت إضافة {count} موظفًا', other: 'تمت إضافة {count} موظف' },
+    ),
+    doneText: ['They are on your employee list now and requests can be made for them.', 'أصبحوا في قائمة موظفيك ويمكن تقديم الطلبات لهم.'],
+    skipped: plural(
+      { one: '1 row was skipped: already on your list', other: '{count} rows were skipped: already on your list' },
+      { zero: 'لم يُتخطَّ أي صف', one: 'تم تخطي صف واحد: موجود في قائمتك', two: 'تم تخطي صفين: موجودان في قائمتك', few: 'تم تخطي {count} صفوف: موجودة في قائمتك', many: 'تم تخطي {count} صفًا: موجودة في قائمتك', other: 'تم تخطي {count} صف: موجودة في قائمتك' },
+    ),
+    skippedRow: ['Row {row}: {name}', 'الصف {row}: {name}'],
+    columns: {
+      fullName: ['Full name', 'الاسم الكامل'],
+      employeeNo: ['Employee number', 'الرقم الوظيفي'],
+      designation: ['Job title', 'المسمى الوظيفي'],
+      phone: ['Mobile', 'الهاتف المتحرك'],
+      email: ['Email', 'البريد الإلكتروني'],
+      nationality: ['Nationality (2-letter code)', 'الجنسية (رمز من حرفين)'],
+      passportNo: ['Passport number', 'رقم جواز السفر'],
+      emiratesId: ['Emirates ID', 'الهوية الإماراتية'],
+    },
+  },
+  errors: {
+    exists: ['Someone with this Emirates ID or passport number is already on your employee list.', 'يوجد في قائمة موظفيك شخص بالهوية الإماراتية نفسها أو برقم جواز السفر نفسه.'],
+    accountNotActive: ['Your company’s account with the centre is not active at the moment, so this cannot be changed. Contact the centre.', 'حساب شركتك لدى المركز غير نشط حاليًا، لذا لا يمكن إجراء هذا التغيير. تواصل مع المركز.'],
+    portalNotIncluded: ['The centre does not offer portal logins at the moment. Contact the centre.', 'لا يوفّر المركز حسابات دخول إلى البوابة حاليًا. تواصل مع المركز.'],
+  },
+};
+
+// ------------------------------------------------------------------ company
+
+const company: Tree = {
+  description: ['Your company as {centre} has it on file.', 'بيانات شركتك كما هي مسجلة لدى {centre}.'],
+  askChange: ['Ask the centre to change something', 'طلب تعديل من المركز'],
+  readOnlyNote: ['These details, the payment terms and the contract prices are kept by {centre}. To change them, ask the centre: they are checked against your trade licence and your agreement.', 'هذه البيانات وشروط الدفع وأسعار العقد محفوظة لدى {centre}. لتعديلها اطلب ذلك من المركز: فهي تُطابَق مع رخصتك التجارية واتفاقيتك.'],
+  termsDays: plural(
+    { one: 'Due {count} day after the invoice date', other: 'Due {count} days after the invoice date' },
+    { zero: 'عند إصدار الفاتورة', one: 'بعد يوم واحد من تاريخ الفاتورة', two: 'بعد يومين من تاريخ الفاتورة', few: 'بعد {count} أيام من تاريخ الفاتورة', many: 'بعد {count} يومًا من تاريخ الفاتورة', other: 'بعد {count} يوم من تاريخ الفاتورة' },
+  ),
+  termsOnInvoice: ['Due when the invoice is issued', 'عند إصدار الفاتورة'],
+  notice: {
+    pendingTitle: ['Your company is being verified', 'جارٍ التحقق من شركتك'],
+    pendingText: ['The centre is checking your trade licence. You can read everything here; employees and requests can be added once the account is verified.', 'يراجع المركز رخصتك التجارية. يمكنك الاطلاع على كل شيء هنا، وتُتاح إضافة الموظفين والطلبات بعد توثيق الحساب.'],
+    suspendedTitle: ['This account is suspended', 'هذا الحساب موقوف'],
+    suspendedText: ['New requests, employees and invitations are paused. You can still read everything and see what is owed. Contact the centre to resolve this.', 'الطلبات الجديدة وإضافة الموظفين والدعوات متوقفة مؤقتًا. ما زال بإمكانك الاطلاع على كل شيء ومعرفة المستحقات. تواصل مع المركز لحل ذلك.'],
+    archivedTitle: ['This account is closed', 'هذا الحساب مغلق'],
+    archivedText: ['Past requests and invoices can still be read.', 'ما زال بالإمكان الاطلاع على الطلبات والفواتير السابقة.'],
+  },
+  details: {
+    title: ['Company', 'الشركة'],
+    name: ['Company name', 'اسم الشركة'],
+    nameAr: ['Name in Arabic', 'الاسم بالعربية'],
+    verified: ['Verified by the centre', 'موثّقة من المركز'],
+    verifiedOn: ['Yes, on {date}', 'نعم، في {date}'],
+  },
+  licence: {
+    title: ['Trade licence', 'الرخصة التجارية'],
+    number: ['Licence number', 'رقم الرخصة'],
+    authority: ['Issued by', 'جهة الإصدار'],
+    expiry: ['Expires', 'تنتهي في'],
+  },
+  billing: {
+    title: ['Billing', 'الفوترة'],
+    email: ['Invoices are sent to', 'تُرسل الفواتير إلى'],
+    trn: ['Tax registration number', 'رقم التسجيل الضريبي'],
+    address: ['Billing address', 'عنوان الفوترة'],
+    poBox: ['PO Box {number}', 'ص.ب {number}'],
+  },
+  terms: {
+    title: ['Payment terms', 'شروط الدفع'],
+    statement: ['Statement and invoices', 'كشف الحساب والفواتير'],
+    due: ['Invoices are', 'استحقاق الفواتير'],
+    limit: ['Credit limit', 'الحد الائتماني'],
+    noLimit: ['No limit set', 'لم يُحدد حد'],
+    available: ['Available credit', 'الائتمان المتاح'],
+    open: ['Open invoices', 'الفواتير المفتوحة'],
+    none: ['No credit terms are approved for your company: each invoice is due when it is issued. Ask the centre if your company needs credit terms.', 'لا توجد تسهيلات ائتمانية معتمدة لشركتك: تُستحق كل فاتورة عند إصدارها. اسأل المركز إذا احتاجت شركتك إلى تسهيلات.'],
+  },
+  prices: {
+    title: ['Contract prices', 'أسعار العقد'],
+    text: ['The service fees your company agreed with the centre. Government and third-party fees are charged as they are and are not part of a contract price.', 'رسوم الخدمة التي اتفقت عليها شركتك مع المركز. أما الرسوم الحكومية ورسوم الأطراف الأخرى فتُحصَّل كما هي وليست جزءًا من سعر العقد.'],
+    contract: ['Your service fee', 'رسوم الخدمة لشركتك'],
+    list: ['List fee', 'الرسوم المعلنة'],
+    empty: ['No contract prices are agreed. The centre’s list fees apply.', 'لا توجد أسعار عقد متفق عليها. تُطبَّق رسوم المركز المعلنة.'],
+  },
+  users: {
+    title: ['Portal users', 'مستخدمو البوابة'],
+    text: ['Colleagues who act for the whole company here: employees, requests, approvals and invoices.', 'الزملاء الذين يتصرفون باسم الشركة كلها هنا: الموظفون والطلبات والموافقات والفواتير.'],
+    invite: ['Invite a colleague', 'دعوة زميل'],
+    inviteText: ['The colleague gets an email with a link to choose a password.', 'يصل الزميل بريد إلكتروني فيه رابط لاختيار كلمة مرور.'],
+    inviteNote: ['A colleague invited here sees everything you see: all employees, all requests and the company’s invoices. For someone who should see only their own requests, invite them from the employee directory instead.', 'الزميل المدعو من هنا يرى كل ما تراه: جميع الموظفين وجميع الطلبات وفواتير الشركة. أما من يُراد له رؤية طلباته فقط فادعُه من قائمة الموظفين.'],
+    fullName: ['Full name', 'الاسم الكامل'],
+    signatory: ['Authorised signatory', 'مفوّض بالتوقيع'],
+    signatoryChoice: ['This person is an authorised signatory of the company', 'هذا الشخص مفوّض بالتوقيع عن الشركة'],
+    signatoryHint: ['The centre may ask for the authorisation letter.', 'قد يطلب المركز خطاب التفويض.'],
+    send: ['Send invitation', 'إرسال الدعوة'],
+    invited: ['Invitation sent', 'تم إرسال الدعوة'],
+    invitedTo: ['Sent to {email}.', 'أُرسلت إلى {email}.'],
+    sentText: ['The link in the email lets your colleague choose a password.', 'الرابط في البريد يتيح لزميلك اختيار كلمة مرور.'],
+    alreadyMember: ['This person is already a portal user of your company.', 'هذا الشخص من مستخدمي البوابة لدى شركتك بالفعل.'],
+    since: ['Added {date}', 'أُضيف في {date}'],
+    empty: ['No portal users yet', 'لا يوجد مستخدمون للبوابة بعد'],
+    manageNote: ['To suspend or remove a portal user, ask {centre}.', 'لإيقاف مستخدم للبوابة أو إزالته اطلب ذلك من {centre}.'],
+    employeesLink: ['Employees with their own login are managed in the employee directory.', 'الموظفون الذين لهم حسابات دخول خاصة يُدارون من قائمة الموظفين.'],
+  },
+};
+
+// ------------------------------------------------------------------ API errors with one meaning, in the company's words
+// (the API writes its messages in English only; see docs/architecture/FRONTEND_CONVENTIONS.md, section 20)
+
+const apiErrors: Tree = {
+  FILE_TYPE_NOT_ALLOWED: ['This kind of file is not accepted. Upload a PDF, or a JPG or PNG image.', 'هذا النوع من الملفات غير مقبول. ارفع ملف PDF أو صورة JPG أو PNG.'],
+  FILE_TOO_LARGE: ['The file is too large. Choose a smaller file, or scan it again at a lower quality.', 'حجم الملف كبير جدًا. اختر ملفًا أصغر أو أعد مسحه بجودة أقل.'],
+  FILE_TYPE_MISMATCH: ['The file is not what its name says (for example a renamed file). Upload a PDF, JPG or PNG.', 'الملف لا يطابق نوعه المعلن (مثل ملف أُعيدت تسميته). ارفع ملف PDF أو JPG أو PNG.'],
+  UPLOAD_REJECTED: ['The upload did not arrive completely. Please upload the file again.', 'لم يكتمل وصول الملف. يُرجى رفعه مرة أخرى.'],
+  UPLOAD_NOT_FOUND: ['The upload did not arrive completely. Please upload the file again.', 'لم يكتمل وصول الملف. يُرجى رفعه مرة أخرى.'],
+  DOCUMENT_NOT_READY: ['This file is still in its security check. Try again in a moment.', 'ما زال هذا الملف في الفحص الأمني. حاول بعد لحظات.'],
+  DOCUMENT_QUARANTINED: ['This file was blocked by the security check and cannot be opened.', 'حُظر هذا الملف في الفحص الأمني ولا يمكن فتحه.'],
+  DOCUMENT_REJECTED: ['The centre did not accept this document. Upload a new copy instead.', 'لم يقبل المركز هذا المستند. ارفع نسخة جديدة بدلًا منه.'],
+  DOCUMENT_EXPIRED: ['This document has expired and cannot be used. Upload the renewed one.', 'انتهت صلاحية هذا المستند ولا يمكن استخدامه. ارفع المستند المجدَّد.'],
+  DOCUMENT_ALREADY_ACCEPTED: ['The centre has already accepted this document; it cannot be changed here.', 'قبل المركز هذا المستند بالفعل، ولا يمكن تغييره من هنا.'],
+  COMPLETION_DOCUMENT_STAFF_ONLY: ['Completed documents are provided by the centre and cannot be uploaded here.', 'المستندات المكتملة يقدّمها المركز ولا يمكن رفعها من هنا.'],
+  REQUEST_CLOSED: ['This request is closed and takes no more changes.', 'هذا الطلب مغلق ولا يقبل تغييرات أخرى.'],
+  FORM_INVALID: ['Some details are missing or not valid. Please check the highlighted fields.', 'بعض البيانات ناقصة أو غير صحيحة. يُرجى مراجعة الحقول المحددة.'],
+  REJECTED_DOCUMENTS_PENDING: ['Replace the documents that were not accepted first. Then the request can be sent back.', 'استبدل أولًا المستندات التي لم تُقبل، ثم يمكن إعادة إرسال الطلب.'],
+  CANCELLATION_NOT_ALLOWED: ['The centre has already started working on this request, so it cannot be cancelled here. Please contact the centre.', 'بدأ المركز العمل على هذا الطلب، لذا لا يمكن إلغاؤه من هنا. يُرجى التواصل مع المركز.'],
+  CORPORATE_ACCOUNT_NOT_ACTIVE: ['Your company’s account with the centre is not active at the moment. Contact the centre.', 'حساب شركتك لدى المركز غير نشط حاليًا. تواصل مع المركز.'],
+  COMPANY_PROFILE_MISSING: ['The centre has not set up a record for the company itself yet. Ask the centre to add it.', 'لم ينشئ المركز بعد سجلًا للشركة نفسها. اطلب من المركز إضافته.'],
+  EMPLOYEE_EXISTS: ['Someone with this Emirates ID or passport number is already on your employee list.', 'يوجد في قائمة موظفيك شخص بالهوية الإماراتية نفسها أو برقم جواز السفر نفسه.'],
+  EMPLOYEE_INACTIVE: ['This employee is inactive. Reactivate them first.', 'هذا الموظف غير نشط. أعد تفعيله أولًا.'],
+  EMPLOYEE_RECORD_LOCKED: ['The centre has closed the record behind this employee. Contact the centre.', 'أغلق المركز السجل الخاص بهذا الموظف. تواصل مع المركز.'],
+  ALREADY_HAS_ACCESS: ['This employee can already sign in to the portal.', 'يستطيع هذا الموظف الدخول إلى البوابة بالفعل.'],
+  INVITATION_PENDING: ['An invitation to this address is already waiting. Send it again instead.', 'توجد دعوة بانتظار القبول على هذا العنوان. أعد إرسالها بدلًا من ذلك.'],
+  NOT_INVITED: ['There is no invitation waiting for this employee any more.', 'لم تعد هناك دعوة بانتظار القبول لهذا الموظف.'],
+  NO_LOGIN: ['This employee has no portal access to remove.', 'ليس لهذا الموظف دخول إلى البوابة ليُلغى.'],
+  EMAIL_REQUIRED: ['Enter the email address the invitation should go to.', 'أدخل البريد الإلكتروني الذي تُرسل إليه الدعوة.'],
+  EMAIL_IN_USE: ['This address already signs in to this portal for another person or role. Use a different address.', 'هذا العنوان مستخدم للدخول إلى هذه البوابة باسم شخص آخر أو بدور آخر. استخدم عنوانًا مختلفًا.'],
+  ALREADY_MEMBER: ['This person is already a portal user of your company.', 'هذا الشخص من مستخدمي البوابة لدى شركتك بالفعل.'],
+  QUOTATION_EXPIRED: ['This quotation has expired. The centre will send a new one.', 'انتهت صلاحية عرض السعر هذا. سيرسل المركز عرضًا جديدًا.'],
+  QUOTATION_NOT_OPEN: ['This quotation is no longer waiting for a decision.', 'لم يعد عرض السعر هذا بانتظار قرار.'],
+  CREDIT_LIMIT_EXCEEDED: ['Approving this would take your company over its credit limit. Pay open invoices first, or ask the centre.', 'الموافقة على ذلك تتجاوز الحد الائتماني لشركتك. ادفع الفواتير المفتوحة أولًا أو راجع المركز.'],
+  INVOICE_NOT_PAYABLE: ['This invoice has nothing left to pay.', 'لا يوجد مبلغ متبقٍّ للدفع في هذه الفاتورة.'],
+  INTEGRATION_NOT_CONFIGURED: ['This centre does not take online payments at the moment. Pay by bank transfer or at the centre.', 'لا يقبل هذا المركز الدفع الإلكتروني حاليًا. ادفع بتحويل بنكي أو في المركز.'],
+  GATEWAY_ERROR: ['The payment provider could not be reached. No money was taken. Please try again in a few minutes.', 'تعذّر الوصول إلى مزوّد الدفع. لم يُخصم أي مبلغ. يُرجى المحاولة بعد دقائق.'],
+  TICKET_CLOSED: ['This conversation is closed. Ask a new question if you still need help.', 'هذه المحادثة مغلقة. اطرح سؤالًا جديدًا إذا كنت ما زلت بحاجة إلى مساعدة.'],
+  ALREADY_RATED: ['You have already given your rating. Thank you.', 'لقد قدّمت تقييمك من قبل. شكرًا لك.'],
+  NO_CUSTOMER_PROFILE: ['Ratings are given by the person the request was for.', 'يُقدَّم التقييم من صاحب الطلب نفسه.'],
+};
+
+const tree: Tree = {
+  common, expiry, requests, form, price, next, service, wizard, checklist, request, documents, fees, approvals, invoices, statement, pay, payReturn, reminders, notifications, support, feedback,
+  employees, company,
+};
+
+export const portalEn: Dictionary = side(tree, 0);
+export const portalAr: Dictionary = side(tree, 1);
+export const portalApiErrorsEn: Dictionary = side(apiErrors, 0);
+export const portalApiErrorsAr: Dictionary = side(apiErrors, 1);

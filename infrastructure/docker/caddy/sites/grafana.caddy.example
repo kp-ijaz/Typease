@@ -1,0 +1,13 @@
+# Optional: publish Grafana (profile monitoring) at grafana.BASE behind HTTP basic
+# authentication in addition to Grafana's own login. Copy to sites/grafana.caddy and set
+# OPS_BASIC_AUTH_USER / OPS_BASIC_AUTH_HASH in caddy.env
+#   (hash: docker run --rm caddy:2.10.0-alpine caddy hash-password --plaintext '<password>').
+# Prefer an SSH tunnel or a VPN if only a few people need access.
+grafana.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	basic_auth {
+		{$OPS_BASIC_AUTH_USER} {$OPS_BASIC_AUTH_HASH}
+	}
+	reverse_proxy grafana:3000
+}

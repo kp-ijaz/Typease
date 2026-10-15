@@ -1,0 +1,76 @@
+{
+  "id": "4cf423cc-f534-4a4c-8518-c131e8020233",
+  "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+  "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+  "quotationNo": "QUO-000001",
+  "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+  "customerId": "d07e8204-075f-46c6-9073-7086af6edf0a",
+  "corporateAccountId": null,
+  "status": "SENT",
+  "currency": "AED",
+  "subtotalServiceFee": "120.00",
+  "subtotalGovernmentFee": "350.00",
+  "subtotalThirdParty": "0.00",
+  "discountTotal": "0.00",
+  "taxTotal": "6.00",
+  "total": "476.00",
+  "validUntil": "2026-10-22T22:45:50.449Z",
+  "notes": null,
+  "sentAt": "2026-10-08T22:45:50.531Z",
+  "decidedAt": null,
+  "decidedByType": null,
+  "rejectionReason": null,
+  "createdAt": "2026-10-08T22:45:50.451Z",
+  "updatedAt": "2026-10-08T22:45:50.533Z",
+  "quotationItems": [
+    {
+      "id": "10c8899a-05f3-415a-9d2c-7c70f4858cfb",
+      "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+      "quotationId": "4cf423cc-f534-4a4c-8518-c131e8020233",
+      "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "description": "Visa application typing (document preparation) - service fee",
+      "component": "SERVICE_FEE",
+      "quantity": "1.00",
+      "unitAmount": "120.00",
+      "discountAmount": "0.00",
+      "taxRatePercent": "5.00",
+      "taxAmount": "6.00",
+      "lineTotal": "126.00",
+      "sortOrder": 0
+    },
+    {
+      "id": "dbf12e41-a075-463a-b622-2c5d045d8e0b",
+      "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+      "quotationId": "4cf423cc-f534-4a4c-8518-c131e8020233",
+      "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "description": "Visa application typing (document preparation) - government fee (estimate)",
+      "component": "GOVERNMENT_FEE",
+      "quantity": "1.00",
+      "unitAmount": "350.00",
+      "discountAmount": "0.00",
+      "taxRatePercent": "0.00",
+      "taxAmount": "0.00",
+      "lineTotal": "350.00",
+      "sortOrder": 1
+    }
+  ],
+  "customer": {
+    "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+    "customerNo": "CUS-000001",
+    "fullName": "Fatima Al Mansoori",
+    "email": "fatima@mobile-fixture.test",
+    "phone": "+971501110002"
+  },
+  "corporateAccount": null,
+  "branch": {
+    "id": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+    "code": "MAIN",
+    "name": "Main Branch"
+  },
+  "request": {
+    "id": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+    "requestNo": "TE-000001"
+  },
+  "expired": false,
+  "invoice": null
+}

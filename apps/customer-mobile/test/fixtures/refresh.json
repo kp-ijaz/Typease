@@ -1,0 +1,49 @@
+{
+  "status": "OK",
+  "accessToken": "header.payload.signature",
+  "expiresIn": 900,
+  "refreshToken": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+  "session": {
+    "user": {
+      "id": "ec37223f-e627-441e-a079-58fc704f00e4",
+      "email": "fatima@mobile-fixture.test",
+      "phone": "+971501110002",
+      "fullName": "Fatima Al Mansoori",
+      "preferredLanguage": "en",
+      "platformRole": null,
+      "mfaEnabled": false,
+      "emailVerified": true,
+      "phoneVerified": false
+    },
+    "tenant": {
+      "id": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+      "slug": "mobile-fixture",
+      "name": "Mobile Fixture Typing",
+      "status": "TRIAL",
+      "timezone": "Asia/Dubai",
+      "currency": "AED"
+    },
+    "membership": {
+      "id": "aac37633-0928-4e99-bcd6-1f39a3ab9345",
+      "kind": "CUSTOMER",
+      "roleKey": "customer",
+      "roleName": "Customer",
+      "allBranches": true,
+      "branchIds": [],
+      "customerId": "d07e8204-075f-46c6-9073-7086af6edf0a",
+      "corporateAccountId": null
+    },
+    "permissions": [
+      "self.profile",
+      "self.requests",
+      "self.documents",
+      "self.payments",
+      "self.appointments",
+      "self.tickets",
+      "self.privacy"
+    ],
+    "supportGrant": null,
+    "mfaRequiredSetup": false
+  },
+  "landing": "/dashboard"
+}

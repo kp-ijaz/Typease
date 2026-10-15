@@ -1,0 +1,12 @@
+{
+  "paymentId": "375a3885-e69e-45cb-92af-8ce237797db2",
+  "paymentNo": "PAY-000001",
+  "status": "PENDING",
+  "invoiceId": "23391776-4ad3-473e-8750-aed5a628f59f",
+  "amount": "476.00",
+  "currency": "AED",
+  "gateway": "sandbox",
+  "testMode": true,
+  "checkoutUrl": "http://localhost:4000/api/v1/public/payments/sandbox/checkout/signed-token-placeholder",
+  "expiresAt": "2026-10-08T23:46:17.708Z"
+}

@@ -1,0 +1,60 @@
+{
+  "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+  "branchName": "Main Branch",
+  "date": "2026-10-12",
+  "timezone": "Asia/Dubai",
+  "serviceId": null,
+  "closed": false,
+  "closedReason": null,
+  "bookableUntil": "2026-12-08",
+  "slots": [
+    {
+      "startsAt": "2026-10-12T05:00:00.000Z",
+      "endsAt": "2026-10-12T05:30:00.000Z",
+      "localStart": "09:00",
+      "localEnd": "09:30",
+      "available": true,
+      "remaining": 2
+    },
+    {
+      "startsAt": "2026-10-12T05:30:00.000Z",
+      "endsAt": "2026-10-12T06:00:00.000Z",
+      "localStart": "09:30",
+      "localEnd": "10:00",
+      "available": true,
+      "remaining": 2
+    },
+    {
+      "startsAt": "2026-10-12T06:00:00.000Z",
+      "endsAt": "2026-10-12T06:30:00.000Z",
+      "localStart": "10:00",
+      "localEnd": "10:30",
+      "available": true,
+      "remaining": 2
+    },
+    {
+      "startsAt": "2026-10-12T06:30:00.000Z",
+      "endsAt": "2026-10-12T07:00:00.000Z",
+      "localStart": "10:30",
+      "localEnd": "11:00",
+      "available": true,
+      "remaining": 2
+    },
+    {
+      "startsAt": "2026-10-12T07:00:00.000Z",
+      "endsAt": "2026-10-12T07:30:00.000Z",
+      "localStart": "11:00",
+      "localEnd": "11:30",
+      "available": true,
+      "remaining": 2
+    },
+    {
+      "startsAt": "2026-10-12T07:30:00.000Z",
+      "endsAt": "2026-10-12T08:00:00.000Z",
+      "localStart": "11:30",
+      "localEnd": "12:00",
+      "available": true,
+      "remaining": 2
+    }
+  ]
+}

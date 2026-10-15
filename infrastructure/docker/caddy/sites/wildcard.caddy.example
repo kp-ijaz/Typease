@@ -1,0 +1,28 @@
+# OPTIONAL: one wildcard certificate for every tenant sub-domain (*.BASE) instead of one
+# on-demand certificate per centre. Recommended once you expect more new centres per week
+# than your CA's "new certificates per registered domain" limit allows.
+#
+# A wildcard certificate can only be obtained with the ACME DNS-01 challenge, so:
+#   1. build Caddy with the module of YOUR DNS provider (infrastructure/docker/caddy/Dockerfile,
+#      build arg CADDY_DNS_MODULE, list: https://github.com/caddy-dns);
+#   2. give Caddy an API token that may edit TXT records of the zone (caddy.env: CADDY_DNS_API_TOKEN);
+#   3. copy this file to sites/wildcard.caddy and adapt the `dns` line to your provider's syntax;
+#   4. create the DNS record  *.BASE  A/AAAA  -> this server.
+#
+# Explicit hosts (api., app., admin., corporate., portal.) keep their own sites: Caddy always
+# prefers the most specific host name. Verified CUSTOM domains keep using on-demand TLS
+# through the catch-all site of Caddyfile.prod.
+#
+# The example uses Cloudflare. Not exercised in the authoring workspace.
+*.{$TYPEASE_BASE_DOMAIN} {
+	tls {
+		dns cloudflare {env.CADDY_DNS_API_TOKEN}
+	}
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes customer-web 3002
+}

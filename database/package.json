@@ -1,0 +1,33 @@
+{
+  "name": "@typease/database",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "format": "prisma format",
+    "generate": "prisma generate",
+    "sql:generate": "tsx scripts/prisma-to-sql.ts",
+    "types:generate": "tsx scripts/generate-types.ts",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=8",
+    "migrate": "tsx scripts/migrate.ts",
+    "migrate:status": "tsx scripts/migrate.ts --status",
+    "seed": "tsx seed/seed.ts",
+    "reset": "tsx scripts/migrate.ts --reset && tsx seed/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "pg": "8.16.3"
+  },
+  "devDependencies": {
+    "@prisma/internals": "7.10.0",
+    "@types/node": "22.18.8",
+    "@types/pg": "8.15.5",
+    "prisma": "7.10.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

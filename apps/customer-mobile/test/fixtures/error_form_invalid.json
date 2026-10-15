@@ -1,0 +1,33 @@
+{
+  "statusCode": 422,
+  "code": "FORM_INVALID",
+  "message": "The application form is not complete: Nationality is required.",
+  "details": [
+    {
+      "field": "nationality",
+      "code": "REQUIRED",
+      "message": "Nationality is required."
+    },
+    {
+      "field": "dateOfBirth",
+      "code": "REQUIRED",
+      "message": "Date of birth is required."
+    },
+    {
+      "field": "visaType",
+      "code": "REQUIRED",
+      "message": "Type of visa is required."
+    },
+    {
+      "field": "sponsorType",
+      "code": "REQUIRED",
+      "message": "Who is the sponsor? is required."
+    },
+    {
+      "field": "passportExpiry",
+      "code": "REQUIRED",
+      "message": "Passport expiry date is required."
+    }
+  ],
+  "requestId": "2e5e54e1-b731-4d2f-9ce7-3cfed58dec00"
+}

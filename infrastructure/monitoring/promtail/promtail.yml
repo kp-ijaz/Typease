@@ -1,0 +1,41 @@
+# ALTERNATIVE to alloy/config.alloy for hosts that still run Promtail (end-of-life upstream
+# since March 2026; prefer Alloy for new installations). Same behaviour: reads Docker's
+# json-file logs, labels each line with the container name taken from the "tag" log option.
+#
+#   promtail:
+#     image: grafana/promtail:3.4.2
+#     command: ["-config.file=/etc/promtail/promtail.yml"]
+#     volumes:
+#       - ./infrastructure/monitoring/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+#       - /var/lib/docker/containers:/var/lib/docker/containers:ro
+#       - promtail-positions:/var/lib/promtail
+#     networks: [monitoring]
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /var/lib/promtail/positions.yml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: docker
+          __path__: /var/lib/docker/containers/*/*-json.log
+    pipeline_stages:
+      - json:
+          expressions:
+            container: attrs.tag
+            stream: stream
+      - labels:
+          container:
+          stream:
+      - docker: {}
+      - replace:
+          expression: '(?i)(?:authorization: bearer |x-internal-token: |password=|"password":")([^"\s&]+)'
+          replace: REDACTED

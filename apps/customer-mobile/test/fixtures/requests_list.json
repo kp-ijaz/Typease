@@ -1,0 +1,123 @@
+{
+  "data": [
+    {
+      "id": "66977f7e-fad4-4183-921e-c40a9fa71f21",
+      "requestNo": "TE-000003",
+      "status": "DRAFT",
+      "priority": "NORMAL",
+      "source": "MOBILE",
+      "paymentStatus": "UNPAID",
+      "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+      "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "corporateAccountId": null,
+      "submittedAt": null,
+      "targetDate": null,
+      "completedAt": null,
+      "createdAt": "2026-10-08T22:49:41.447Z",
+      "updatedAt": "2026-10-08T22:49:41.746Z",
+      "externalStatus": null,
+      "statusLabel": {
+        "en": "Draft — not submitted yet",
+        "ar": "مسودة — لم تُرسل بعد"
+      },
+      "customer": {
+        "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+        "customerNo": "CUS-000001",
+        "fullName": "Fatima Al Mansoori"
+      },
+      "customerName": "Fatima Al Mansoori",
+      "service": {
+        "id": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+        "name": "Visa application typing (document preparation)",
+        "nameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+        "code": "ST-VISA-TYPING"
+      },
+      "serviceName": "Visa application typing (document preparation)",
+      "overdue": false
+    },
+    {
+      "id": "6b201d1d-0828-425e-b6aa-1455a80fc1fc",
+      "requestNo": "TE-000002",
+      "status": "EXTERNAL_PROCESSING",
+      "priority": "NORMAL",
+      "source": "MOBILE",
+      "paymentStatus": "UNPAID",
+      "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+      "serviceId": "02589196-58cb-43e0-9ce8-e646cb5cadb0",
+      "corporateAccountId": null,
+      "submittedAt": "2026-10-08T22:48:12.348Z",
+      "targetDate": "2026-10-09T22:48:12.348Z",
+      "completedAt": null,
+      "createdAt": "2026-10-08T22:48:12.215Z",
+      "updatedAt": "2026-10-08T22:48:21.531Z",
+      "externalStatus": {
+        "status": "Under process at the authority",
+        "source": "STAFF_ENTERED",
+        "sourceLabel": {
+          "en": "Entered by staff (not verified by the authority)",
+          "ar": "أدخلها الموظف (غير مؤكدة من الجهة)"
+        },
+        "at": "2026-10-08T22:48:21.528Z"
+      },
+      "statusLabel": {
+        "en": "Submitted — in processing",
+        "ar": "تم التقديم — قيد المعالجة"
+      },
+      "customer": {
+        "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+        "customerNo": "CUS-000001",
+        "fullName": "Fatima Al Mansoori"
+      },
+      "customerName": "Fatima Al Mansoori",
+      "service": {
+        "id": "02589196-58cb-43e0-9ce8-e646cb5cadb0",
+        "name": "PRO document run (per visit)",
+        "nameAr": "خدمة مندوب لتسليم واستلام المستندات (لكل زيارة)",
+        "code": "ST-PRO-VISIT"
+      },
+      "serviceName": "PRO document run (per visit)",
+      "overdue": false
+    },
+    {
+      "id": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+      "requestNo": "TE-000001",
+      "status": "COMPLETED",
+      "priority": "NORMAL",
+      "source": "MOBILE",
+      "paymentStatus": "PAID",
+      "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+      "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "corporateAccountId": null,
+      "submittedAt": "2026-10-08T22:45:31.633Z",
+      "targetDate": "2026-10-09T22:45:31.633Z",
+      "completedAt": "2026-10-08T22:46:50.727Z",
+      "createdAt": "2026-10-08T22:45:01.436Z",
+      "updatedAt": "2026-10-08T22:46:50.768Z",
+      "externalStatus": null,
+      "statusLabel": {
+        "en": "Completed",
+        "ar": "مكتمل"
+      },
+      "customer": {
+        "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+        "customerNo": "CUS-000001",
+        "fullName": "Fatima Al Mansoori"
+      },
+      "customerName": "Fatima Al Mansoori",
+      "service": {
+        "id": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+        "name": "Visa application typing (document preparation)",
+        "nameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+        "code": "ST-VISA-TYPING"
+      },
+      "serviceName": "Visa application typing (document preparation)",
+      "overdue": false
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 3,
+    "totalPages": 1
+  }
+}

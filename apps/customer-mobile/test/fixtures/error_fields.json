@@ -1,0 +1,18 @@
+{
+  "statusCode": 422,
+  "code": "FORM_INVALID",
+  "message": "Please check the form: Date of birth must be a date (YYYY-MM-DD).",
+  "details": [
+    {
+      "field": "dateOfBirth",
+      "code": "INVALID_FORMAT",
+      "message": "Date of birth must be a date (YYYY-MM-DD)."
+    },
+    {
+      "field": "visaType",
+      "code": "INVALID_OPTION",
+      "message": "Type of visa: choose one of the listed options."
+    }
+  ],
+  "requestId": "e384bf13-8f96-47d7-85ac-6a39a8cbbe40"
+}

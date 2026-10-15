@@ -1,0 +1,156 @@
+# Deploy: manual, protected by a GitHub environment (required reviewers, deployment branches).
+#
+# What it does: connects to the host over SSH, checks out the SAME version of this repository
+# there (Compose file, Caddyfile, scripts) and runs scripts/deploy.sh, which pulls the images,
+# backs up the database, runs the migrations, restarts API / worker / web apps in a rolling
+# fashion and checks readiness. Then a smoke test runs from the runner against the public URL.
+#
+# Environment configuration (Settings > Environments > <name>)
+#   secrets    DEPLOY_SSH_KEY            private key of a dedicated deploy user (ed25519)
+#              DEPLOY_SSH_KNOWN_HOSTS    output of `ssh-keyscan -t ed25519 <host>` - verified out of band
+#              SMOKE_EMAIL, SMOKE_PASSWORD   optional: a low-privilege account for the smoke test
+#   variables  DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH (default /opt/typease), DEPLOY_USE_SUDO (true|false)
+#              PUBLIC_API_URL            https://api.<domain>
+#              SMOKE_TENANT_SLUG, SMOKE_ALLOWED_ORIGIN   optional
+#
+# The deploy user is effectively root on that host, either way - protect its key accordingly:
+#   * DEPLOY_USE_SUDO=true (recommended): sudoers lets it run exactly scripts/deploy.sh as
+#     root; /etc/typease stays root-only (0600). It needs no docker group membership.
+#   * otherwise: member of the `docker` group with read access to /etc/typease/*.env and
+#     write access to compose.env (docker compose reads the env files on the client side).
+# The application secrets stay on the host; GitHub never sees them.
+#
+# Alternatives to SSH from GitHub-hosted runners (no inbound SSH from the internet): a
+# self-hosted runner inside the network, a VPN / Tailscale step before the SSH step, or a
+# pull-based agent on the host that deploys the version written to a release file.
+#
+# ROLLBACK is the same workflow with the previous version and "skip migrations" ticked.
+# The job summary of a failed run prints the exact values. Read
+# docs/deployment/upgrades-and-rollbacks.md before rolling back across a migration.
+#
+# Not executed yet (reviewed by hand, YAML parsed).
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        required: true
+      version:
+        description: "Image / git tag to deploy (v1.4.2). Must exist in GHCR."
+        type: string
+        required: true
+      skip_migrate:
+        description: "Skip migrations (use for a ROLLBACK to a previous version)"
+        type: boolean
+        default: false
+      skip_backup:
+        description: "Skip the pre-deploy database backup (managed database with PITR only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# One deployment per environment at a time; a running deployment is never cancelled.
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: ${{ inputs.version }} -> ${{ inputs.environment }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.PUBLIC_API_URL }}
+    env:
+      VERSION: ${{ inputs.version }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH || '/opt/typease' }}
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+    steps:
+      # Inputs reach the shell through environment variables only (never interpolated into
+      # a script), and the version is restricted to a safe character set before it is used.
+      - name: Validate inputs
+        run: |
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.]+)?$ || "$VERSION" =~ ^sha-[0-9a-f]{12}$ ]] \
+            || { echo "::error::version must look like v1.4.2 or sha-<12 hex>"; exit 1; }
+          for v in DEPLOY_HOST DEPLOY_USER PUBLIC_API_URL; do
+            [ -n "${!v}" ] || { echo "::error::environment variable $v is not configured"; exit 1; }
+          done
+
+      - uses: actions/checkout@v4.2.2      # for scripts/smoke-test.sh and wait-for.sh on the runner
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+        run: |
+          [ -n "$DEPLOY_SSH_KEY" ] && [ -n "$DEPLOY_SSH_KNOWN_HOSTS" ] || { echo "::error::DEPLOY_SSH_KEY / DEPLOY_SSH_KNOWN_HOSTS secrets are missing"; exit 1; }
+          install -d -m 700 ~/.ssh
+          ( umask 077; printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key )
+          printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CONF
+          Host deploy-target
+            HostName $DEPLOY_HOST
+            User $DEPLOY_USER
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          CONF
+
+      - name: Deploy on the host
+        env:
+          SKIP_MIGRATE: ${{ inputs.skip_migrate }}
+          SKIP_BACKUP: ${{ inputs.skip_backup }}
+          USE_SUDO: ${{ vars.DEPLOY_USE_SUDO }}
+        run: |
+          flags=""
+          [ "$SKIP_MIGRATE" = true ] && flags="$flags --skip-migrate"
+          [ "$SKIP_BACKUP" = true ] && flags="$flags --skip-backup"
+          case "$VERSION" in
+            sha-*) ref="${VERSION#sha-}" ;;            # abbreviated commit id
+            *) ref="refs/tags/$VERSION" ;;
+          esac
+          sudo_prefix=""
+          [ "$USE_SUDO" = true ] && sudo_prefix="sudo -n"
+          # Built from validated values only; a plain && chain works with any login shell.
+          ssh deploy-target "cd '$DEPLOY_PATH' && git fetch --tags --prune origin && git checkout --detach '$ref' && $sudo_prefix scripts/deploy.sh '$VERSION' $flags"
+
+      - name: Wait for public readiness
+        run: scripts/wait-for.sh --timeout 180 http "$PUBLIC_API_URL/health/ready"
+
+      - name: Smoke test (public URL, through the reverse proxy)
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          SMOKE_TENANT_SLUG: ${{ vars.SMOKE_TENANT_SLUG }}
+          SMOKE_ALLOWED_ORIGIN: ${{ vars.SMOKE_ALLOWED_ORIGIN }}
+        run: scripts/smoke-test.sh --api "$PUBLIC_API_URL"
+
+      - name: Rollback instructions
+        if: failure()
+        run: |
+          # deploy-history.log only records SUCCESSFUL deployments: its last line is the version to go back to.
+          previous="$(ssh deploy-target "tail -n 1 /etc/typease/deploy-history.log 2>/dev/null | cut -d' ' -f2" 2>/dev/null || true)"
+          {
+            echo "## Deployment of $VERSION failed"
+            echo
+            echo "Nothing was rolled back automatically: after a migration ran, going back is a decision for a human."
+            echo
+            echo "1. Look at the failing step above and at the host: \`docker compose --env-file /etc/typease/compose.env -f docker-compose.prod.yml ps\` and \`logs --tail 200 api migrate\`."
+            echo "2. To return to the previous code, run this workflow again with **version = ${previous:-<the previous version>}** and **Skip migrations = true**."
+            echo "3. Migrations are forward-only. If the new migration is not compatible with the previous code, restore the pre-deploy backup instead (\`scripts/db-restore.sh\`, docs/security/BACKUP_AND_RECOVERY.md)."
+            echo "4. Verify with \`scripts/smoke-test.sh --api $PUBLIC_API_URL\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

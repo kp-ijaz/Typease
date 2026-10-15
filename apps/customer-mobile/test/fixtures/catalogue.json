@@ -1,0 +1,846 @@
+{
+  "categories": [
+    {
+      "key": "typing",
+      "name": "Typing & Documentation",
+      "nameAr": "الطباعة والمستندات",
+      "icon": "file-text",
+      "serviceCount": 2
+    },
+    {
+      "key": "visa",
+      "name": "Visa Assistance",
+      "nameAr": "المساعدة في التأشيرات",
+      "icon": "plane",
+      "serviceCount": 1
+    },
+    {
+      "key": "residence",
+      "name": "Residence Assistance",
+      "nameAr": "المساعدة في الإقامة",
+      "icon": "home",
+      "serviceCount": 1
+    },
+    {
+      "key": "emirates-id",
+      "name": "Emirates ID Assistance",
+      "nameAr": "المساعدة في الهوية الإماراتية",
+      "icon": "id-card",
+      "serviceCount": 1
+    },
+    {
+      "key": "labour",
+      "name": "Labour & Employment Documents",
+      "nameAr": "مستندات العمل والتوظيف",
+      "icon": "briefcase",
+      "serviceCount": 1
+    },
+    {
+      "key": "business",
+      "name": "Business Setup Coordination",
+      "nameAr": "تنسيق تأسيس الأعمال",
+      "icon": "building",
+      "serviceCount": 1
+    },
+    {
+      "key": "pro",
+      "name": "PRO Services",
+      "nameAr": "خدمات المندوب",
+      "icon": "stamp",
+      "serviceCount": 1
+    },
+    {
+      "key": "attestation",
+      "name": "Attestation Coordination",
+      "nameAr": "تنسيق التصديق",
+      "icon": "badge-check",
+      "serviceCount": 1
+    },
+    {
+      "key": "translation",
+      "name": "Translation Coordination",
+      "nameAr": "تنسيق الترجمة",
+      "icon": "languages",
+      "serviceCount": 1
+    },
+    {
+      "key": "other",
+      "name": "Other Services",
+      "nameAr": "خدمات أخرى",
+      "icon": "star",
+      "serviceCount": 1
+    }
+  ],
+  "services": [
+    {
+      "id": "8b87e6b6-506d-4e40-8c95-bc6388bc61fc",
+      "name": "Tenancy contract typing",
+      "nameAr": "طباعة عقد الإيجار",
+      "description": "We type your tenancy contract from the details you provide and hand you a print-ready copy for signature.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "Bring the landlord and tenant identity documents and the property details. Registration of the contract with the relevant authority is not part of this service.",
+      "category": {
+        "key": "typing",
+        "name": "Typing & Documentation",
+        "nameAr": "الطباعة والمستندات",
+        "icon": "file-text"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 2,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "8b87e6b6-506d-4e40-8c95-bc6388bc61fc",
+        "priceId": "663bb035-4946-4dd7-bcd7-43022ae0f2a2",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.190Z",
+        "serviceFee": "75.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "75.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "75.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "3.75",
+            "total": "78.75"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "75.00",
+        "taxableAmount": "75.00",
+        "taxAmount": "3.75",
+        "total": "78.75",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "78.75",
+        "containsEstimates": false
+      }
+    },
+    {
+      "id": "561b40a2-e213-4d93-baf2-d72e6a248d60",
+      "name": "Letter and application typing",
+      "nameAr": "طباعة الرسائل والطلبات",
+      "description": "Typing of letters, undertakings, no-objection letters and general applications in English or Arabic.",
+      "descriptionAr": null,
+      "eligibilityGuidance": null,
+      "category": {
+        "key": "typing",
+        "name": "Typing & Documentation",
+        "nameAr": "الطباعة والمستندات",
+        "icon": "file-text"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 1,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "561b40a2-e213-4d93-baf2-d72e6a248d60",
+        "priceId": "a4297c0c-4559-419a-b52e-82b2e371e1c8",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.200Z",
+        "serviceFee": "30.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "30.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "30.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "1.50",
+            "total": "31.50"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "30.00",
+        "taxableAmount": "30.00",
+        "taxAmount": "1.50",
+        "total": "31.50",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "31.50",
+        "containsEstimates": false
+      }
+    },
+    {
+      "id": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "name": "Visa application typing (document preparation)",
+      "nameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+      "description": "We check your documents for completeness and prepare the visa application form for you. You or your sponsor submit it through the official channel.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "Eligibility is decided by the issuing authority, not by the centre. Authority and third-party amounts shown are estimates only. The amounts that apply on the day are confirmed in your quotation.",
+      "category": {
+        "key": "visa",
+        "name": "Visa Assistance",
+        "nameAr": "المساعدة في التأشيرات",
+        "icon": "plane"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 24,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+        "priceId": "641ffe37-01f9-4b76-a3b4-a28b65398cbc",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.205Z",
+        "serviceFee": "120.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "120.00",
+        "governmentFeeEstimate": "350.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "120.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "6.00",
+            "total": "126.00"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "350.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "350.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "470.00",
+        "taxableAmount": "120.00",
+        "taxAmount": "6.00",
+        "total": "476.00",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "476.00",
+        "containsEstimates": true
+      }
+    },
+    {
+      "id": "45bb6847-b2a6-448f-a3da-611e49385086",
+      "name": "Residence renewal typing (document preparation)",
+      "nameAr": "طباعة طلب تجديد الإقامة (تجهيز المستندات)",
+      "description": "Preparation of the residence renewal application and a checklist of what the authority normally asks for.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "Start before the current residence expires. Authority and third-party amounts shown are estimates only. The amounts that apply on the day are confirmed in your quotation.",
+      "category": {
+        "key": "residence",
+        "name": "Residence Assistance",
+        "nameAr": "المساعدة في الإقامة",
+        "icon": "home"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 24,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "45bb6847-b2a6-448f-a3da-611e49385086",
+        "priceId": "c53866f8-9721-4340-af13-7e6467b450a9",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.211Z",
+        "serviceFee": "150.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "150.00",
+        "governmentFeeEstimate": "500.00",
+        "thirdPartyFeeEstimate": "320.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "150.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "7.50",
+            "total": "157.50"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "500.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "500.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "320.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "320.00"
+          }
+        ],
+        "subtotal": "970.00",
+        "taxableAmount": "150.00",
+        "taxAmount": "7.50",
+        "total": "977.50",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "977.50",
+        "containsEstimates": true
+      }
+    },
+    {
+      "id": "f38a34ae-80ae-42ca-831a-9fc5884110f7",
+      "name": "Emirates ID application typing (document preparation)",
+      "nameAr": "طباعة طلب الهوية الإماراتية (تجهيز المستندات)",
+      "description": "We prepare the Emirates ID application form (new, renewal or replacement) from your documents. The application is decided and issued by the authority.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "Authority and third-party amounts shown are estimates only. The amounts that apply on the day are confirmed in your quotation.",
+      "category": {
+        "key": "emirates-id",
+        "name": "Emirates ID Assistance",
+        "nameAr": "المساعدة في الهوية الإماراتية",
+        "icon": "id-card"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 4,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "f38a34ae-80ae-42ca-831a-9fc5884110f7",
+        "priceId": "597825ec-303a-4ea0-a18c-3da7a2e428d6",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.219Z",
+        "serviceFee": "70.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "70.00",
+        "governmentFeeEstimate": "270.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "70.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "3.50",
+            "total": "73.50"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "270.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "270.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "340.00",
+        "taxableAmount": "70.00",
+        "taxAmount": "3.50",
+        "total": "343.50",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "343.50",
+        "containsEstimates": true
+      }
+    },
+    {
+      "id": "07c7f471-8661-4ea4-9b0b-805333b9b54d",
+      "name": "Employment contract typing (document preparation)",
+      "nameAr": "طباعة عقد العمل (تجهيز المستندات)",
+      "description": "Typing of employment offer letters and contract forms from the details agreed between employer and employee.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "The employer remains responsible for submitting the contract through its own authorised account.",
+      "category": {
+        "key": "labour",
+        "name": "Labour & Employment Documents",
+        "nameAr": "مستندات العمل والتوظيف",
+        "icon": "briefcase"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 8,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "07c7f471-8661-4ea4-9b0b-805333b9b54d",
+        "priceId": "d8764029-d66b-46a1-b670-d7abc8b950b5",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.225Z",
+        "serviceFee": "100.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "100.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "100.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "5.00",
+            "total": "105.00"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "100.00",
+        "taxableAmount": "100.00",
+        "taxAmount": "5.00",
+        "total": "105.00",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "105.00",
+        "containsEstimates": false
+      }
+    },
+    {
+      "id": "dad6766b-8c25-4e9f-b771-e2a8ad6a72c2",
+      "name": "Trade licence renewal paperwork",
+      "nameAr": "تجهيز مستندات تجديد الرخصة التجارية",
+      "description": "We collect and check the papers needed to renew a trade licence and prepare the renewal forms for the licence holder to submit.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "The licensing authority decides on the renewal. Authority and third-party amounts shown are estimates only. The amounts that apply on the day are confirmed in your quotation.",
+      "category": {
+        "key": "business",
+        "name": "Business Setup Coordination",
+        "nameAr": "تنسيق تأسيس الأعمال",
+        "icon": "building"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 48,
+      "paymentPolicy": "DEPOSIT",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "dad6766b-8c25-4e9f-b771-e2a8ad6a72c2",
+        "priceId": "9ec83341-8486-44a9-a47e-ba80723005ca",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.232Z",
+        "serviceFee": "400.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "400.00",
+        "governmentFeeEstimate": "9500.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "400.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "20.00",
+            "total": "420.00"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "9500.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "9500.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "9900.00",
+        "taxableAmount": "400.00",
+        "taxAmount": "20.00",
+        "total": "9920.00",
+        "paymentPolicy": "DEPOSIT",
+        "depositPercent": "50.00",
+        "dueBeforeProcessing": "4960.00",
+        "containsEstimates": true
+      }
+    },
+    {
+      "id": "02589196-58cb-43e0-9ce8-e646cb5cadb0",
+      "name": "PRO document run (per visit)",
+      "nameAr": "خدمة مندوب لتسليم واستلام المستندات (لكل زيارة)",
+      "description": "A staff member delivers or collects your documents at a counter you name and reports back with the receipt.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "A signed authorisation letter is needed when the counter requires one.",
+      "category": {
+        "key": "pro",
+        "name": "PRO Services",
+        "nameAr": "خدمات المندوب",
+        "icon": "stamp"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 24,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "02589196-58cb-43e0-9ce8-e646cb5cadb0",
+        "priceId": "f3ec09eb-7b0b-4c14-9fba-4db6cfaa5487",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.237Z",
+        "serviceFee": "150.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "150.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "150.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "7.50",
+            "total": "157.50"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "150.00",
+        "taxableAmount": "150.00",
+        "taxAmount": "7.50",
+        "total": "157.50",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "157.50",
+        "containsEstimates": false
+      }
+    },
+    {
+      "id": "aa8f77ed-5e14-4f4e-b22f-ec5c7c3c29d5",
+      "name": "Certificate attestation paperwork",
+      "nameAr": "تجهيز مستندات تصديق الشهادات",
+      "description": "We prepare the attestation request and guide you through the steps for educational, marriage and birth certificates.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "Original certificates are required by the attesting bodies. Authority and third-party amounts shown are estimates only. The amounts that apply on the day are confirmed in your quotation.",
+      "category": {
+        "key": "attestation",
+        "name": "Attestation Coordination",
+        "nameAr": "تنسيق التصديق",
+        "icon": "badge-check"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 72,
+      "paymentPolicy": "DEPOSIT",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "aa8f77ed-5e14-4f4e-b22f-ec5c7c3c29d5",
+        "priceId": "7daf4dea-b372-449c-b928-1bb123e7355f",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.241Z",
+        "serviceFee": "200.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "200.00",
+        "governmentFeeEstimate": "150.00",
+        "thirdPartyFeeEstimate": "250.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "200.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "10.00",
+            "total": "210.00"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "150.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "150.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "250.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "250.00"
+          }
+        ],
+        "subtotal": "600.00",
+        "taxableAmount": "200.00",
+        "taxAmount": "10.00",
+        "total": "610.00",
+        "paymentPolicy": "DEPOSIT",
+        "depositPercent": "50.00",
+        "dueBeforeProcessing": "305.00",
+        "containsEstimates": true
+      }
+    },
+    {
+      "id": "272a851a-5c61-4aba-a995-34baf1a1a6af",
+      "name": "Document translation coordination",
+      "nameAr": "تنسيق ترجمة المستندات",
+      "description": "We arrange the translation of your document with a translation office and return the translated copy to you.",
+      "descriptionAr": null,
+      "eligibilityGuidance": "The translator charges per page; the third-party amount shown is an estimate for one page.",
+      "category": {
+        "key": "translation",
+        "name": "Translation Coordination",
+        "nameAr": "تنسيق الترجمة",
+        "icon": "languages"
+      },
+      "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+      "estimatedProcessingHours": 48,
+      "paymentPolicy": "BEFORE_PROCESSING",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "272a851a-5c61-4aba-a995-34baf1a1a6af",
+        "priceId": "776daa9e-da69-4399-9508-fc21fde655ee",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.247Z",
+        "serviceFee": "40.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "40.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "80.00",
+        "taxMode": "SERVICE_FEE_ONLY",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "40.00",
+            "isEstimate": false,
+            "taxable": true,
+            "taxAmount": "2.00",
+            "total": "42.00"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "80.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "80.00"
+          }
+        ],
+        "subtotal": "120.00",
+        "taxableAmount": "40.00",
+        "taxAmount": "2.00",
+        "total": "122.00",
+        "paymentPolicy": "BEFORE_PROCESSING",
+        "depositPercent": null,
+        "dueBeforeProcessing": "122.00",
+        "containsEstimates": true
+      }
+    },
+    {
+      "id": "cb62b09b-41d8-46bc-8d0b-451b059f528a",
+      "name": "Service information and document checklist",
+      "nameAr": "معلومات الخدمات وقائمة المستندات المطلوبة",
+      "description": "Not sure what you need? Tell us what you want to do and we will send you the list of documents to prepare. This is general information, not legal advice or a decision of any authority.",
+      "descriptionAr": null,
+      "eligibilityGuidance": null,
+      "category": {
+        "key": "other",
+        "name": "Other Services",
+        "nameAr": "خدمات أخرى",
+        "icon": "star"
+      },
+      "complianceCapability": "INFORMATIONAL_ONLY",
+      "estimatedProcessingHours": 4,
+      "paymentPolicy": "AFTER_COMPLETION",
+      "onlineAvailable": true,
+      "allBranches": true,
+      "branchIds": [],
+      "price": {
+        "serviceId": "cb62b09b-41d8-46bc-8d0b-451b059f528a",
+        "priceId": "f5c2659c-40e5-4e56-85fa-83a4e6f1f0d3",
+        "source": "DEFAULT",
+        "branchId": null,
+        "corporateAccountId": null,
+        "currency": "AED",
+        "validFrom": "2026-10-08T22:44:34.262Z",
+        "serviceFee": "0.00",
+        "serviceFeeSource": "CATALOGUE",
+        "listServiceFee": "0.00",
+        "governmentFeeEstimate": "0.00",
+        "thirdPartyFeeEstimate": "0.00",
+        "taxMode": "NONE",
+        "taxRatePercent": "5.00",
+        "components": [
+          {
+            "component": "SERVICE_FEE",
+            "amount": "0.00",
+            "isEstimate": false,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "GOVERNMENT_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          },
+          {
+            "component": "THIRD_PARTY_FEE",
+            "amount": "0.00",
+            "isEstimate": true,
+            "taxable": false,
+            "taxAmount": "0.00",
+            "total": "0.00"
+          }
+        ],
+        "subtotal": "0.00",
+        "taxableAmount": "0.00",
+        "taxAmount": "0.00",
+        "total": "0.00",
+        "paymentPolicy": "AFTER_COMPLETION",
+        "depositPercent": null,
+        "dueBeforeProcessing": "0.00",
+        "containsEstimates": false
+      }
+    }
+  ]
+}

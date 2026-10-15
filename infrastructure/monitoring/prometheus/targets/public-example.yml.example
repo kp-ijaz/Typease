@@ -1,0 +1,12 @@
+# Copy to <PROMETHEUS_TARGETS_DIR>/public-prod.yml (default /etc/typease/prometheus-targets)
+# and list the public URLs to probe from outside-in. Each one gets an uptime check and a
+# certificate-expiry alert. Add important tenant custom domains here as well.
+- labels:
+    environment: production
+  targets:
+    - https://api.example.ae/health
+    - https://api.example.ae/health/ready
+    - https://app.example.ae/
+    - https://admin.example.ae/
+    - https://corporate.example.ae/
+    - https://portal.example.ae/

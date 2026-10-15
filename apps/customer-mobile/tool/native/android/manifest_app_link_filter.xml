@@ -1,0 +1,9 @@
+            <!-- Android App Links for https://@HOST@/... . Verified links need
+                 https://@HOST@/.well-known/assetlinks.json listing this app's package
+                 name and signing-certificate fingerprint (see WHITE_LABEL_MOBILE.md). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="@HOST@" />
+            </intent-filter>

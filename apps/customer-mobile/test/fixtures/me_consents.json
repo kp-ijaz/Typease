@@ -1,0 +1,70 @@
+{
+  "consents": [
+    {
+      "purpose": "SERVICE_PROCESSING",
+      "description": "Using my details and documents to handle the services I request",
+      "status": "GRANTED",
+      "granted": true,
+      "lawfulBasis": "CONTRACT",
+      "noticeVersion": null,
+      "grantedAt": "2026-10-08T22:44:48.087Z",
+      "withdrawnAt": null,
+      "updatedAt": "2026-10-08T22:44:48.096Z"
+    },
+    {
+      "purpose": "REMINDERS",
+      "description": "Reminders before my documents expire",
+      "status": "GRANTED",
+      "granted": true,
+      "lawfulBasis": "CONSENT",
+      "noticeVersion": null,
+      "grantedAt": "2026-10-08T22:47:53.843Z",
+      "withdrawnAt": null,
+      "updatedAt": "2026-10-08T22:47:53.845Z"
+    },
+    {
+      "purpose": "MARKETING",
+      "description": "Offers and news from the centre",
+      "status": "WITHDRAWN",
+      "granted": false,
+      "lawfulBasis": "CONSENT",
+      "noticeVersion": null,
+      "grantedAt": null,
+      "withdrawnAt": "2026-10-08T22:44:48.087Z",
+      "updatedAt": "2026-10-08T22:44:48.105Z"
+    },
+    {
+      "purpose": "AI_PROCESSING",
+      "description": "AI-assisted reading of my documents to pre-fill forms",
+      "status": "NOT_SET",
+      "granted": false,
+      "lawfulBasis": "CONSENT",
+      "noticeVersion": null,
+      "grantedAt": null,
+      "withdrawnAt": null,
+      "updatedAt": null
+    },
+    {
+      "purpose": "DOCUMENT_REUSE",
+      "description": "Re-using valid documents on my file for new requests",
+      "status": "GRANTED",
+      "granted": true,
+      "lawfulBasis": "CONSENT",
+      "noticeVersion": null,
+      "grantedAt": "2026-10-08T22:47:53.847Z",
+      "withdrawnAt": null,
+      "updatedAt": "2026-10-08T22:47:53.848Z"
+    },
+    {
+      "purpose": "WHATSAPP",
+      "description": "Messages on WhatsApp",
+      "status": "NOT_SET",
+      "granted": false,
+      "lawfulBasis": "CONSENT",
+      "noticeVersion": null,
+      "grantedAt": null,
+      "withdrawnAt": null,
+      "updatedAt": null
+    }
+  ]
+}

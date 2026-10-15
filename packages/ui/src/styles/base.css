@@ -1,0 +1,148 @@
+/*
+ * Base styles shared by every TypEase web app. Plain CSS on purpose (no
+ * @layer / @apply): each app imports this file BEFORE its @tailwind directives.
+ *
+ *   @import '@typease/ui/src/styles/theme.css';
+ *   @import '@typease/ui/src/styles/base.css';
+ *   @tailwind base; @tailwind components; @tailwind utilities;
+ */
+
+:root {
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --radius: 0.5rem;
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+/* Arabic: IBM Plex Sans Arabic for Arabic script; Latin letters and digits fall through to Inter. */
+:root[lang='ar'] {
+  --font-sans: 'IBM Plex Sans Arabic', 'Inter Variable', 'Inter', 'Segoe UI', Tahoma, Arial, sans-serif;
+}
+/* Letter-spacing breaks the joins of Arabic script. */
+:root[lang='ar'] *:not(.keep-tracking) {
+  letter-spacing: 0 !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  font-feature-settings: 'cv11', 'ss01', 'calt';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+:root[lang='ar'] body {
+  line-height: 1.6;
+  font-feature-settings: normal;
+}
+
+/* One border colour everywhere unless a component says otherwise. */
+*,
+::before,
+::after {
+  border-color: hsl(var(--border));
+}
+
+::selection {
+  background-color: hsl(var(--secondary) / 0.22);
+}
+
+/* Numbers that must line up (tables, money, counters). */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+/* Values that are always written left to right, also inside Arabic text: phone numbers, references, amounts. */
+.ltr-value {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+}
+:root[dir='rtl'] .ltr-value {
+  text-align: right;
+}
+/* Directional icons (chevrons, arrows) point the other way in right-to-left layouts. */
+:root[dir='rtl'] .rtl-mirror {
+  transform: scaleX(-1);
+}
+
+/* Screen-reader skip link target and reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Thin, quiet scrollbars inside panels. */
+.scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* Hide the native number spinners: MoneyInput and numeric fields are typed. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+/* The native date picker icon follows the theme. */
+.dark input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}
+
+/*
+ * Printing. The app shell hides its sidebar and top bar (print:hidden); here: white paper, the light
+ * theme (see theme.css), no toasts, and two helpers for pages: `.no-print` and `.print-only`.
+ */
+.print-only {
+  display: none;
+}
+@media print {
+  :root {
+    color-scheme: light !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  [data-sonner-toaster],
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: revert;
+  }
+  /* A card split across two pages is hard to read; rows of a table should stay whole. */
+  tr,
+  li {
+    break-inside: avoid;
+  }
+  a[href]::after {
+    content: none;
+  }
+}
+
+/*
+ * Scroll containers are positioning contexts. A visually hidden label (.sr-only is position: absolute)
+ * inside a container that scrolls sideways would otherwise be placed against the page, at the far end of
+ * the scrolled content, and make the whole page scroll sideways on a phone. Zero specificity (:where), so
+ * any positioning utility on the container (sticky, fixed, absolute) still wins.
+ */
+:where(.scroll-quiet, .overflow-x-auto, .overflow-x-scroll, .overflow-auto, .overflow-scroll) {
+  position: relative;
+}

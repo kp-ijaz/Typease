@@ -1,0 +1,10 @@
+{
+  "Rules": [
+    {
+      "ID": "expire-abandoned-uploads",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "incoming/" },
+      "Expiration": { "Days": 1 }
+    }
+  ]
+}

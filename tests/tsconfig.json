@@ -1,0 +1,45 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "baseUrl": ".",
+    "noEmit": true,
+    "declaration": false,
+    "sourceMap": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "isolatedModules": false,
+    "strictPropertyInitialization": false,
+    "typeRoots": [
+      "../services/api/node_modules/@types",
+      "./node_modules/@types"
+    ],
+    "types": [
+      "node",
+      "jest",
+      "multer"
+    ],
+    "paths": {
+      "@typease/permissions": [
+        "../packages/permissions/src/index.ts"
+      ],
+      "@typease/types": [
+        "../packages/types/src/index.ts"
+      ],
+      "@typease/validation": [
+        "../packages/validation/src/index.ts"
+      ],
+      "@typease/database": [
+        "../database/index.ts"
+      ],
+      "supertest": [
+        "../services/api/node_modules/@types/supertest"
+      ]
+    }
+  },
+  "include": [
+    "support/**/*.ts",
+    "integration/**/*.ts",
+    "security/**/*.ts"
+  ]
+}

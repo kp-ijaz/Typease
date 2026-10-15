@@ -1,0 +1,8 @@
+{
+  "API_BASE_URL": "http://10.0.2.2:4000/api/v1",
+  "APP_FLAVOR": "dev",
+  "PORTAL_BASE_URL": "",
+  "DEEP_LINK_SCHEME": "typease",
+  "DEEP_LINK_HOSTS": "",
+  "FIREBASE_ENABLED": false
+}

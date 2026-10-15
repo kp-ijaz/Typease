@@ -1,0 +1,62 @@
+# Build context filter for every image (context = repository root).
+# Goal: no secrets, no host build output, no data, nothing the images do not need.
+
+# --- secrets and local configuration -----------------------------------------
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+!**/.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.age
+*.enc
+**/secrets/
+**/*service-account*.json
+
+# --- version control / editor / CI -------------------------------------------
+.git
+.gitignore
+.github
+.vscode
+.idea
+.editorconfig
+*.swp
+.DS_Store
+
+# --- dependencies and build output (always rebuilt inside the image) ---------
+**/node_modules
+**/dist
+**/.next
+**/out
+**/coverage
+**/*.tsbuildinfo
+**/.turbo
+database/generated
+
+# --- runtime data -------------------------------------------------------------
+storage-data
+**/storage-data
+backups
+*.dump
+*.sql.gz
+*.log
+test-results
+playwright-report
+tests/e2e/.auth
+
+# --- not part of any image ----------------------------------------------------
+# (infrastructure/ holds the environment files of the Compose stacks: keep it out,
+#  except the entry point script that the API / worker images copy)
+apps/customer-mobile
+docs
+*.md
+docker-compose*.yml
+infrastructure
+!infrastructure/docker/entrypoint.sh
+scripts
+!scripts/production-readiness.mjs

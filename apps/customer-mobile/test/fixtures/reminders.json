@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "id": "8545301f-9c28-44d5-8353-0789ddc2ada4",
+      "documentTypeKey": "passport",
+      "documentTypeName": "Passport",
+      "documentTypeNameAr": "جواز السفر",
+      "subjectLabel": "Fatima Al Mansoori",
+      "expiryDate": "2030-01-01",
+      "daysLeft": 1180,
+      "status": "ACTIVE",
+      "nextReminderOn": "2029-10-03",
+      "renewalRequestId": null,
+      "renewalPath": "/requests/new?renewalOf=8545301f-9c28-44d5-8353-0789ddc2ada4"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}

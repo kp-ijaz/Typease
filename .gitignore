@@ -1,0 +1,29 @@
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+!.env.*.example
+database/generated/
+storage-data/
+test-results/
+playwright-report/
+.turbo/
+.DS_Store
+*.log
+# Flutter
+apps/customer-mobile/.dart_tool/
+apps/customer-mobile/build/
+apps/customer-mobile/.flutter-plugins*
+apps/customer-mobile/android/local.properties
+apps/customer-mobile/ios/Pods/
+.next-dev/
+.next-*/
+
+# Redis snapshot
+dump.rdb
+*.mp4

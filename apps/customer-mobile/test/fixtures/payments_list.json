@@ -1,0 +1,59 @@
+{
+  "data": [
+    {
+      "id": "375a3885-e69e-45cb-92af-8ce237797db2",
+      "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+      "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+      "paymentNo": "PAY-000001",
+      "receiptNo": "RCT-000001",
+      "customerId": "d07e8204-075f-46c6-9073-7086af6edf0a",
+      "corporateAccountId": null,
+      "method": "ONLINE_GATEWAY",
+      "status": "COMPLETED",
+      "amount": "476.00",
+      "refundedAmount": "0.00",
+      "currency": "AED",
+      "gateway": "sandbox",
+      "gatewayPaymentRef": "sbx_pi_96f1d4a279c7c012c11faec1",
+      "reference": "INV-000001",
+      "failureReason": null,
+      "receivedAt": "2026-10-08T22:46:17.802Z",
+      "createdAt": "2026-10-08T22:46:17.702Z",
+      "updatedAt": "2026-10-08T22:46:17.802Z",
+      "customer": {
+        "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+        "customerNo": "CUS-000001",
+        "fullName": "Fatima Al Mansoori"
+      },
+      "branch": {
+        "id": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+        "code": "MAIN",
+        "name": "Main Branch"
+      },
+      "paymentAllocations": [
+        {
+          "id": "ebba4ed6-039d-40f6-9462-44a43ca3a1fc",
+          "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+          "paymentId": "375a3885-e69e-45cb-92af-8ce237797db2",
+          "invoiceId": "23391776-4ad3-473e-8750-aed5a628f59f",
+          "amount": "476.00",
+          "createdAt": "2026-10-08T22:46:17.808Z",
+          "invoice": {
+            "id": "23391776-4ad3-473e-8750-aed5a628f59f",
+            "invoiceNo": "INV-000001",
+            "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+            "status": "PAID",
+            "balanceDue": "0.00"
+          }
+        }
+      ],
+      "unallocatedAmount": "0.00"
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}

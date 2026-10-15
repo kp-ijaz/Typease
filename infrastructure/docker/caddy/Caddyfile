@@ -1,0 +1,192 @@
+# TypEase reverse proxy - LOCAL DEVELOPMENT / DEMO (plain HTTP, no certificates).
+# Production: Caddyfile.prod (automatic HTTPS + on-demand TLS for tenant custom domains).
+#
+# Host names (BASE = TYPEASE_BASE_DOMAIN, default typease.localhost; browsers resolve
+# every *.localhost name to 127.0.0.1, so no hosts-file entries are needed):
+#
+#   api.BASE         -> api:4000
+#   app.BASE         -> centre-web:3001        staff console
+#   admin.BASE       -> platform-admin:3004    platform console
+#   corporate.BASE   -> corporate-portal:3003
+#   s3.BASE          -> minio:9000             presigned uploads / downloads from the browser
+#   portal.BASE      -> customer-web:3002      shared customer portal (?tenant=<slug>)
+#   <slug>.BASE      -> customer-web:3002      a centre's own portal address
+#
+# Caddy listens inside the container on the SAME port that is published on the host
+# (HTTP_PORT, default 80). That keeps every URL identical for the browser and for the
+# containers, which matters for S3 presigned URLs (the Host header is part of the signature).
+#
+# Validate after editing (needs Docker):  scripts/validate-infra.sh
+{
+	auto_https off
+	admin localhost:2019
+	metrics
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Snippets
+# ---------------------------------------------------------------------------
+
+# Headers that are safe without TLS. (HSTS is only sent by Caddyfile.prod.)
+(security_headers) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+		-X-Powered-By
+		defer
+	}
+}
+
+# JSON access log on stdout. One-time tokens travel in URLs (email links, signed
+# local-storage links, document share links): redact them before they reach the log.
+(access_log) {
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp `(/storage/local/(?:upload|download)/|/shared-documents/|[?&](?:token|code|sig|signature|otp)=)[^/?&#]+` "${1}REDACTED"
+				request>headers>X-Internal-Token delete
+			}
+		}
+	}
+}
+
+# /api/v1/internal/* (on-demand TLS "ask", Prometheus metrics) is for the proxy and the
+# monitoring network only. It is refused here on EVERY public host, and the token header
+# is stripped from anything that comes from outside. The match is made on the cleaned,
+# decoded path and is case-insensitive.
+(block_internal) {
+	request_header -X-Internal-Token
+	@internal path /api/v1/internal /api/v1/internal/*
+	respond @internal 404
+}
+
+# The API. X-Forwarded-For / -Proto / -Host are set by Caddy; values sent by the client
+# are discarded (no trusted proxies are configured), so the API - which trusts exactly one
+# proxy hop - sees the real client address.
+(api_upstream) {
+	reverse_proxy api:4000 {
+		lb_try_duration 5s
+		lb_try_interval 250ms
+	}
+}
+
+# Logos / favicons. With STORAGE_DRIVER=s3 the API stores them in the public assets
+# bucket but still hands out /api/v1/public/assets/<key> URLs, so the proxy serves
+# that path straight from the bucket. Disabled (falls through to the API) unless
+# S3_PUBLIC_ASSETS_PROXY=true.
+(public_assets) {
+	@assets {
+		method GET HEAD
+		path_regexp asset `^/api/v1/public/assets/([A-Za-z0-9_-]{16,80}\.(?:png|jpg|webp))$`
+		expression `{$S3_PUBLIC_ASSETS_PROXY:false} == true`
+	}
+	handle @assets {
+		rewrite * /{$S3_PUBLIC_ASSETS_BUCKET:typease-public-assets}/{re.asset.1}
+		reverse_proxy {$S3_PUBLIC_ASSETS_UPSTREAM:http://minio:9000} {
+			header_up Host {upstream_hostport}
+			header_up -Authorization
+			header_up -Cookie
+			header_down Cache-Control "public, max-age=31536000, immutable"
+		}
+	}
+}
+
+# Routing shared by every host that serves a web application ({args[0]} = service:port):
+# internal endpoints refused, /api/v1/* straight to the API (same-origin API for the
+# portals; see the explanation in Caddyfile.prod), everything else to the web app.
+(web_routes) {
+	route {
+		import block_internal
+		@api path /api/v1/*
+		handle @api {
+			import public_assets
+			import api_upstream
+		}
+		reverse_proxy {args[0]}
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Sites
+# ---------------------------------------------------------------------------
+
+http://api.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	# Uploads go through the API only with the local storage driver (UPLOAD_MAX_BYTES = 15 MiB).
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	route {
+		import block_internal
+		import public_assets
+		import api_upstream
+	}
+}
+
+http://app.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes centre-web:3001
+}
+
+http://admin.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes platform-admin:3004
+}
+
+http://corporate.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes corporate-portal:3003
+}
+
+# Object storage endpoint used in presigned URLs (S3_ENDPOINT). Development only:
+# with a managed object store the browser talks to the provider directly.
+http://s3.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80} {
+	import access_log
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	reverse_proxy minio:9000
+}
+
+# Customer portal: the shared address and every tenant sub-domain.
+http://portal.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80}, http://*.{$TYPEASE_BASE_DOMAIN:typease.localhost}:{$HTTP_PORT:80} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes customer-web:3002
+}
+
+# Prometheus metrics of the proxy itself (request counts and latency per server).
+# The port is not published; only containers on Caddy's networks can reach it.
+http://:9180 {
+	metrics
+}

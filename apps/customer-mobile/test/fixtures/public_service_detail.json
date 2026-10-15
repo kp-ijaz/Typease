@@ -1,0 +1,53 @@
+{
+  "centre": {
+    "slug": "mobile-fixture",
+    "name": "Mobile Fixture Typing",
+    "currency": "AED"
+  },
+  "service": {
+    "id": "a57bf7b9-58b5-413a-9cde-19c0b7f3d9c0",
+    "name": "Tenancy contract typing",
+    "nameAr": "طباعة عقد الإيجار",
+    "description": "We type your tenancy contract from the details you provide and hand you a print-ready copy for signature.",
+    "descriptionAr": null,
+    "eligibilityGuidance": "Bring the landlord and tenant identity documents and the property details. Registration of the contract with the relevant authority is not part of this service.",
+    "category": {
+      "key": "typing",
+      "name": "Typing & Documentation",
+      "nameAr": "الطباعة والمستندات",
+      "icon": "file-text"
+    },
+    "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+    "estimatedProcessingHours": 2,
+    "onlineAvailable": true,
+    "requiredDocuments": [
+      {
+        "label": "Tenant's Emirates ID",
+        "labelAr": "الهوية الإماراتية للمستأجر",
+        "description": null,
+        "isMandatory": true
+      },
+      {
+        "label": "Landlord's passport or Emirates ID copy",
+        "labelAr": "نسخة من جواز سفر أو هوية المؤجر",
+        "description": null,
+        "isMandatory": true
+      },
+      {
+        "label": "Title deed or previous contract",
+        "labelAr": "سند الملكية أو العقد السابق",
+        "description": null,
+        "isMandatory": false
+      }
+    ],
+    "feeEstimate": {
+      "currency": "AED",
+      "serviceFee": "75.00",
+      "governmentFeeEstimate": "0.00",
+      "thirdPartyFeeEstimate": "0.00",
+      "taxEstimate": "3.75",
+      "totalEstimate": "78.75",
+      "isEstimate": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "API_BASE_URL": "https://api.example.ae/api/v1",
+  "APP_FLAVOR": "prod",
+  "PORTAL_BASE_URL": "https://portal.example.ae",
+  "DEEP_LINK_SCHEME": "typease",
+  "DEEP_LINK_HOSTS": "portal.example.ae",
+  "FIREBASE_ENABLED": true,
+  "FIREBASE_API_KEY": "from-the-firebase-console",
+  "FIREBASE_APP_ID": "from-the-firebase-console",
+  "FIREBASE_MESSAGING_SENDER_ID": "from-the-firebase-console",
+  "FIREBASE_PROJECT_ID": "from-the-firebase-console"
+}

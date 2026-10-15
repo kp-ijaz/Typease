@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "declaration": false,
+    "sourceMap": false,
+    "allowJs": false,
+    "baseUrl": ".",
+    "paths": {
+      "@typease/types": ["../types/src/index.ts"],
+      "@typease/validation": ["../validation/src/index.ts"],
+      "@typease/permissions": ["../permissions/src/index.ts"],
+      "@typease/branding": ["../branding/src/index.ts"],
+      "@typease/api-client": ["../api-client/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

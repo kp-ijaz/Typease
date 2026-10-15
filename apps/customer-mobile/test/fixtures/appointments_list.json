@@ -1,0 +1,52 @@
+{
+  "data": [
+    {
+      "id": "98f6f22f-6f72-4972-ace8-c44b6c6d9bbf",
+      "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+      "branchName": "Main Branch",
+      "branchNameAr": null,
+      "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "serviceName": "Visa application typing (document preparation)",
+      "serviceNameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+      "startsAt": "2026-10-12T06:00:00.000Z",
+      "endsAt": "2026-10-12T06:30:00.000Z",
+      "localDate": "2026-10-12",
+      "localTime": "10:00",
+      "localEndTime": "10:30",
+      "timezone": "Asia/Dubai",
+      "status": "BOOKED",
+      "cancelledReason": null,
+      "rescheduledFromId": "a2d236c8-fb1a-46d1-8e30-e67637342fc4",
+      "rescheduledToId": null,
+      "canCancel": true,
+      "canReschedule": true
+    },
+    {
+      "id": "a2d236c8-fb1a-46d1-8e30-e67637342fc4",
+      "branchId": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+      "branchName": "Main Branch",
+      "branchNameAr": null,
+      "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+      "serviceName": "Visa application typing (document preparation)",
+      "serviceNameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+      "startsAt": "2026-10-12T05:00:00.000Z",
+      "endsAt": "2026-10-12T05:30:00.000Z",
+      "localDate": "2026-10-12",
+      "localTime": "09:00",
+      "localEndTime": "09:30",
+      "timezone": "Asia/Dubai",
+      "status": "RESCHEDULED",
+      "cancelledReason": null,
+      "rescheduledFromId": null,
+      "rescheduledToId": "98f6f22f-6f72-4972-ace8-c44b6c6d9bbf",
+      "canCancel": false,
+      "canReschedule": false
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 2,
+    "totalPages": 1
+  }
+}

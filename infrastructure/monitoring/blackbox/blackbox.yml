@@ -1,0 +1,23 @@
+# Blackbox exporter modules used by the uptime checks in prometheus.yml.
+modules:
+  # Inside the Docker network (plain HTTP): /health, /health/ready, worker health.
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      preferred_ip_protocol: ip4
+      follow_redirects: false
+  # Public URLs: must be HTTPS with a valid certificate; exports probe_ssl_earliest_cert_expiry.
+  http_2xx_tls:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      valid_status_codes: [200, 204, 301, 302, 307, 308]
+      preferred_ip_protocol: ip4
+      follow_redirects: false
+      fail_if_not_ssl: true
+      tls_config:
+        insecure_skip_verify: false

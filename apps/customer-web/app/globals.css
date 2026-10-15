@@ -1,0 +1,6 @@
+@import '../../../packages/ui/src/styles/theme.css';
+@import '../../../packages/ui/src/styles/base.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

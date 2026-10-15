@@ -1,0 +1,17 @@
+packages:
+  - "apps/*"
+  - "!apps/customer-mobile"
+  - "services/*"
+  - "packages/*"
+  - "database"
+  - "tests"
+
+# Packages that are allowed to run install scripts (pnpm 10 blocks them by default).
+onlyBuiltDependencies:
+  - "@prisma/engines"
+  - "prisma"
+  - "@swc/core"
+  - "esbuild"
+  - "sharp"
+  - "@nestjs/core"
+  - "unrs-resolver"

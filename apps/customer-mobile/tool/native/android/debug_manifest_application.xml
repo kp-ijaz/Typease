@@ -1,0 +1,6 @@
+    <!-- typease:begin debug-cleartext (applied by tool/native/apply_native_config.py) -->
+    <!-- DEBUG BUILDS ONLY: allows plain http so the app can reach a local API
+         (http://10.0.2.2:4000 on the emulator). Release builds keep the platform
+         default and must use https. -->
+    <application android:usesCleartextTraffic="true" />
+    <!-- typease:end debug-cleartext -->

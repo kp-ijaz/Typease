@@ -1,0 +1,13 @@
+# Optional: publish the n8n editor (profile n8n) at n8n.BASE behind HTTP basic authentication
+# in addition to n8n's own user management. Copy to sites/n8n.caddy and set
+# OPS_BASIC_AUTH_USER / OPS_BASIC_AUTH_HASH in caddy.env. The API does not need this site:
+# it calls n8n inside the Docker network (N8N_WEBHOOK_BASE_URL=http://n8n:5678/webhook).
+# Prefer an SSH tunnel or a VPN:  ssh -L 5678:<n8n container address>:5678 <host>
+n8n.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	basic_auth {
+		{$OPS_BASIC_AUTH_USER} {$OPS_BASIC_AUTH_HASH}
+	}
+	reverse_proxy n8n:5678
+}

@@ -1,0 +1,19 @@
+{
+  "buckets": {
+    "newRequests": 0,
+    "pendingVerification": 0,
+    "awaitingCustomer": 0,
+    "awaitingPayment": 0,
+    "readyForProcessing": 0,
+    "inProgress": 1,
+    "completedToday": 1,
+    "overdue": 0
+  },
+  "byStatus": {
+    "DRAFT": 1,
+    "EXTERNAL_PROCESSING": 1,
+    "COMPLETED": 1
+  },
+  "open": 1,
+  "drafts": 1
+}

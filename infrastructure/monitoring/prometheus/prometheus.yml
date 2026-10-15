@@ -1,0 +1,96 @@
+# Prometheus configuration for the TypEase Compose stacks (profile "monitoring").
+# Written for Prometheus 3.x: `http_headers` (custom scrape headers) is used to send the
+# API's internal token. With an older Prometheus use the alternative described in
+# infrastructure/monitoring/README.md.
+#
+# Syntax-checked with a YAML parser only in the authoring workspace. CI runs
+# `promtool check config` / `promtool check rules` (scripts/validate-infra.sh).
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # --- TypEase API: GET /api/v1/internal/metrics, protected by the x-internal-token header.
+  # The token is read from a file written by the container entrypoint (never in this file).
+  # DNS discovery returns one target per API replica.
+  - job_name: typease-api
+    metrics_path: /api/v1/internal/metrics
+    scheme: http
+    http_headers:
+      x-internal-token:
+        files: ["/tmp/internal_api_token"]
+    dns_sd_configs:
+      - names: ["api"]
+        type: A
+        port: 4000
+        refresh_interval: 15s
+
+  # --- reverse proxy: request rate, status codes and latency per server (Caddy `metrics`).
+  - job_name: caddy
+    static_configs:
+      - targets: ["caddy:9180"]
+
+  - job_name: postgres
+    static_configs:
+      - targets: ["postgres-exporter:9187"]
+
+  - job_name: redis
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+
+  # Host metrics + the backup freshness metric (textfile collector, scripts/db-backup.sh).
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  - job_name: loki
+    static_configs:
+      - targets: ["loki:3100"]
+
+  # --- uptime checks inside the Docker network: liveness, readiness, worker health.
+  - job_name: blackbox-internal
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://api:4000/health
+          - http://api:4000/health/ready
+          - http://worker:4100/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # --- uptime + certificate expiry of the PUBLIC URLs (through DNS, TLS and the proxy).
+  # Targets come from /etc/prometheus/targets/public-*.yml so they can differ per environment.
+  - job_name: blackbox-public
+    metrics_path: /probe
+    params:
+      module: [http_2xx_tls]
+    file_sd_configs:
+      - files: ["/etc/prometheus/targets/public-*.yml"]
+        refresh_interval: 1m
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

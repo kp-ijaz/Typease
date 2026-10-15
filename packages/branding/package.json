@@ -1,0 +1,27 @@
+{
+  "name": "@typease/branding",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypEase brand: design tokens, logo, and white-label theme maths.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run --passWithNoTests",
+    "assets": "tsx scripts/write-assets.ts"
+  },
+  "dependencies": { "@typease/types": "workspace:*" },
+  "peerDependencies": { "react": ">=19" },
+  "devDependencies": {
+    "@types/node": "22.18.8",
+    "@types/react": "19.1.15",
+    "@types/react-dom": "19.1.9",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "fb377988-b0d4-4025-a430-386c3d1719ac",
+  "customerId": "d07e8204-075f-46c6-9073-7086af6edf0a",
+  "type": "EXPORT",
+  "status": "RECEIVED",
+  "details": "Please send me a copy of my data.",
+  "decisionNote": null,
+  "retentionException": null,
+  "exportDocumentId": null,
+  "dueAt": "2026-11-07T22:47:37.406Z",
+  "overdue": false,
+  "completedAt": null,
+  "createdAt": "2026-10-08T22:47:37.412Z",
+  "updatedAt": "2026-10-08T22:47:37.412Z"
+}

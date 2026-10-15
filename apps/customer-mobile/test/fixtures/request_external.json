@@ -1,0 +1,345 @@
+{
+  "id": "6b201d1d-0828-425e-b6aa-1455a80fc1fc",
+  "requestNo": "TE-000002",
+  "status": "EXTERNAL_PROCESSING",
+  "statusLabel": {
+    "en": "Submitted — in processing",
+    "ar": "تم التقديم — قيد المعالجة"
+  },
+  "tone": "info",
+  "priority": "NORMAL",
+  "source": "MOBILE",
+  "paymentStatus": "UNPAID",
+  "version": 8,
+  "branch": {
+    "id": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+    "code": "MAIN",
+    "name": "Main Branch",
+    "nameAr": null
+  },
+  "customer": {
+    "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+    "customerNo": "CUS-000001",
+    "fullName": "Fatima Al Mansoori",
+    "fullNameAr": "فاطمة المنصوري",
+    "type": "INDIVIDUAL"
+  },
+  "corporateAccount": null,
+  "service": {
+    "id": "02589196-58cb-43e0-9ce8-e646cb5cadb0",
+    "name": "PRO document run (per visit)",
+    "nameAr": "خدمة مندوب لتسليم واستلام المستندات (لكل زيارة)",
+    "code": "ST-PRO-VISIT"
+  },
+  "customerInstructions": "Morning preferred",
+  "submittedAt": "2026-10-08T22:48:12.348Z",
+  "targetDate": "2026-10-09T22:48:12.348Z",
+  "completedAt": null,
+  "cancelledAt": null,
+  "overdue": false,
+  "submissionChannel": "MANUAL_PORTAL",
+  "externalStatus": {
+    "status": "Under process at the authority",
+    "source": "STAFF_ENTERED",
+    "sourceLabel": {
+      "en": "Entered by staff (not verified by the authority)",
+      "ar": "أدخلها الموظف (غير مؤكدة من الجهة)"
+    },
+    "at": "2026-10-08T22:48:21.528Z"
+  },
+  "renewalOfDocumentId": null,
+  "createdAt": "2026-10-08T22:48:12.215Z",
+  "updatedAt": "2026-10-08T22:48:21.531Z",
+  "form": {
+    "definitionId": "e45eacb9-05c7-44ca-b005-15a6684c8160",
+    "schema": {
+      "steps": [
+        {
+          "key": "visit",
+          "title": "Visit details",
+          "fields": [
+            {
+              "key": "destination",
+              "type": "text",
+              "label": "Where should we go?",
+              "labelAr": "الجهة المطلوب زيارتها",
+              "required": true,
+              "maxLength": 200
+            },
+            {
+              "key": "task",
+              "type": "textarea",
+              "label": "What should be delivered or collected?",
+              "labelAr": "ما المطلوب تسليمه أو استلامه؟",
+              "required": true,
+              "maxLength": 1000
+            },
+            {
+              "key": "preferredDate",
+              "type": "date",
+              "label": "Preferred date",
+              "labelAr": "التاريخ المفضل"
+            }
+          ],
+          "titleAr": "تفاصيل الزيارة"
+        }
+      ]
+    },
+    "values": {
+      "destination": "GDRFA Dubai",
+      "task": "Deliver the application"
+    },
+    "visibleFields": [
+      "destination",
+      "task",
+      "preferredDate"
+    ],
+    "fields": [
+      {
+        "key": "destination",
+        "value": "GDRFA Dubai",
+        "source": "CUSTOMER",
+        "verified": false,
+        "updatedAt": "2026-10-08T22:48:12.238Z"
+      },
+      {
+        "key": "task",
+        "value": "Deliver the application",
+        "source": "CUSTOMER",
+        "verified": false,
+        "updatedAt": "2026-10-08T22:48:12.240Z"
+      }
+    ]
+  },
+  "checklist": [
+    {
+      "id": "e9cdc926-1135-430d-a79b-7184a954269e",
+      "kind": "INPUT",
+      "documentTypeKey": "other",
+      "label": "Documents to deliver / authorisation letter",
+      "labelAr": "المستندات المطلوب تسليمها / خطاب التفويض",
+      "isMandatory": false,
+      "status": "MISSING",
+      "note": null,
+      "actionRequired": false,
+      "document": null
+    }
+  ],
+  "externalReferences": [
+    {
+      "id": "2f333b78-79e9-4882-b607-b317e8152126",
+      "channel": "MANUAL_PORTAL",
+      "authorityName": "GDRFA Dubai",
+      "referenceNo": "GD-2026-000123",
+      "status": "Under process at the authority",
+      "statusSource": "STAFF_ENTERED",
+      "statusSourceLabel": {
+        "en": "Entered by staff (not verified by the authority)",
+        "ar": "أدخلها الموظف (غير مؤكدة من الجهة)"
+      },
+      "result": null,
+      "recordedAt": "2026-10-08T22:48:21.410Z"
+    }
+  ],
+  "comments": [],
+  "finance": {
+    "quotation": null,
+    "invoices": [],
+    "totals": {
+      "invoiced": "0.00",
+      "paid": "0.00",
+      "refunded": "0.00",
+      "balance": "0.00"
+    }
+  },
+  "workflow": {
+    "status": "ACTIVE",
+    "currentStepKey": "submission",
+    "steps": [
+      {
+        "key": "form",
+        "name": "Application details",
+        "nameAr": "بيانات الطلب",
+        "type": "CUSTOMER_FORM",
+        "position": 1,
+        "status": "COMPLETED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.369Z",
+        "completedAt": "2026-10-08T22:48:12.380Z"
+      },
+      {
+        "key": "documents",
+        "name": "Upload documents",
+        "nameAr": "رفع المستندات",
+        "type": "DOCUMENT_UPLOAD",
+        "position": 2,
+        "status": "COMPLETED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.388Z",
+        "completedAt": "2026-10-08T22:48:12.391Z"
+      },
+      {
+        "key": "verification",
+        "name": "Document verification",
+        "nameAr": "التحقق من المستندات",
+        "type": "STAFF_VERIFICATION",
+        "position": 3,
+        "status": "COMPLETED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.395Z",
+        "completedAt": "2026-10-08T22:48:12.406Z"
+      },
+      {
+        "key": "quotation",
+        "name": "Quotation",
+        "nameAr": "عرض السعر",
+        "type": "QUOTATION",
+        "position": 4,
+        "status": "SKIPPED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.410Z",
+        "completedAt": "2026-10-08T22:48:12.610Z"
+      },
+      {
+        "key": "customer-approval",
+        "name": "Quotation approval",
+        "nameAr": "الموافقة على عرض السعر",
+        "type": "CUSTOMER_APPROVAL",
+        "position": 5,
+        "status": "SKIPPED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.620Z",
+        "completedAt": "2026-10-08T22:48:12.623Z"
+      },
+      {
+        "key": "payment",
+        "name": "Payment",
+        "nameAr": "الدفع",
+        "type": "PAYMENT",
+        "position": 6,
+        "status": "SKIPPED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.626Z",
+        "completedAt": "2026-10-08T22:48:12.630Z"
+      },
+      {
+        "key": "prepare",
+        "name": "Prepare application",
+        "nameAr": "تحضير الطلب",
+        "type": "STAFF_TASK",
+        "position": 7,
+        "status": "COMPLETED",
+        "current": false,
+        "startedAt": "2026-10-08T22:48:12.633Z",
+        "completedAt": "2026-10-08T22:48:12.950Z"
+      },
+      {
+        "key": "submission",
+        "name": "Submission and external processing",
+        "nameAr": "التقديم والمعالجة الخارجية",
+        "type": "EXTERNAL_PROCESSING",
+        "position": 8,
+        "status": "ACTIVE",
+        "current": true,
+        "startedAt": "2026-10-08T22:48:12.964Z",
+        "completedAt": null
+      },
+      {
+        "key": "completion",
+        "name": "Final review and completion",
+        "nameAr": "المراجعة النهائية والإنجاز",
+        "type": "COMPLETION",
+        "position": 9,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      }
+    ]
+  },
+  "allowedActions": {
+    "transitions": [],
+    "other": [
+      "comment"
+    ]
+  },
+  "nextStep": {
+    "waitingOn": "AUTHORITY",
+    "text": {
+      "en": "The application was submitted. We are waiting for the result.",
+      "ar": "تم تقديم الطلب وننتظر النتيجة."
+    }
+  },
+  "history": [
+    {
+      "id": "4cbf01d2-0483-4751-8874-7dd9f7f94122",
+      "status": "DRAFT",
+      "statusLabel": {
+        "en": "Draft — not submitted yet",
+        "ar": "مسودة — لم تُرسل بعد"
+      },
+      "message": "Draft — not submitted yet",
+      "at": "2026-10-08T22:48:12.227Z"
+    },
+    {
+      "id": "e8b52d67-a44f-48a3-bd56-f2d7ba29877e",
+      "status": "SUBMITTED",
+      "statusLabel": {
+        "en": "Submitted",
+        "ar": "تم الإرسال"
+      },
+      "message": "Submitted",
+      "at": "2026-10-08T22:48:12.348Z"
+    },
+    {
+      "id": "7f220de6-b74e-44fb-ac06-d4d4fe33475f",
+      "status": "UNDER_REVIEW",
+      "statusLabel": {
+        "en": "Documents under review",
+        "ar": "المستندات قيد المراجعة"
+      },
+      "message": "Documents under review",
+      "at": "2026-10-08T22:48:12.398Z"
+    },
+    {
+      "id": "23a8744b-942b-4a3a-adc3-1f975f5dafe4",
+      "status": "READY_FOR_PROCESSING",
+      "statusLabel": {
+        "en": "Queued for processing",
+        "ar": "في قائمة المعالجة"
+      },
+      "message": "Queued for processing",
+      "at": "2026-10-08T22:48:12.588Z"
+    },
+    {
+      "id": "5d37d5aa-c64c-4f67-bccb-18a6dd0a365f",
+      "status": "IN_PREPARATION",
+      "statusLabel": {
+        "en": "Being prepared",
+        "ar": "قيد التحضير"
+      },
+      "message": "Being prepared",
+      "at": "2026-10-08T22:48:12.749Z"
+    },
+    {
+      "id": "9bd9a858-3f8a-4dcf-aa78-497a2a39cb76",
+      "status": "READY_TO_SUBMIT",
+      "statusLabel": {
+        "en": "Ready for submission",
+        "ar": "جاهز للتقديم"
+      },
+      "message": "Ready for submission",
+      "at": "2026-10-08T22:48:12.916Z"
+    },
+    {
+      "id": "7c22d5b7-ea2b-4d41-a29c-367aea6db6dd",
+      "status": "EXTERNAL_PROCESSING",
+      "statusLabel": {
+        "en": "Submitted — in processing",
+        "ar": "تم التقديم — قيد المعالجة"
+      },
+      "message": "Submitted — in processing",
+      "at": "2026-10-08T22:48:21.415Z"
+    }
+  ]
+}

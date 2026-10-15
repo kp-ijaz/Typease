@@ -1,0 +1,52 @@
+// Grafana Alloy: ships the logs of every container on this host to Loki.
+//
+// It reads Docker's json-file logs from /var/lib/docker/containers (mounted read-only),
+// so it needs NO access to the Docker socket. The Compose files set the logging option
+// tag: "{{.Name}}", which Docker stores in each log line's "attrs.tag"; it becomes the
+// `container` label (e.g. typease-api-1, typease-caddy-1).
+//
+//   {container=~"typease-api-.*"}                 API (NestJS text log lines)
+//   {container=~"typease-caddy-.*"} | json        access log (JSON: status, duration, request.uri ...)
+//
+// Promtail (the previous Grafana agent, end-of-life since March 2026) users: an equivalent
+// configuration is in ../promtail/promtail.yml.
+// Not executed in the authoring workspace.
+
+local.file_match "containers" {
+  path_targets = [{
+    __path__ = "/var/lib/docker/containers/*/*-json.log",
+    job      = "docker",
+  }]
+}
+
+loki.source.file "containers" {
+  targets    = local.file_match.containers.targets
+  forward_to = [loki.process.containers.receiver]
+}
+
+loki.process "containers" {
+  // {"log":"...","stream":"stdout","attrs":{"tag":"typease-api-1"},"time":"..."}
+  stage.json {
+    expressions = { container = "attrs.tag", stream = "stream" }
+  }
+  stage.labels {
+    values = { container = "", stream = "" }
+  }
+  // Unwraps the Docker envelope: the log line becomes the message, "time" the timestamp.
+  stage.docker { }
+
+  // Never ship obvious credentials, whatever a component decided to log.
+  // Only the capture group (the secret) is replaced.
+  stage.replace {
+    expression = "(?i)(?:authorization: bearer |x-internal-token: |password=|\"password\":\")([^\"\\s&]+)"
+    replace    = "REDACTED"
+  }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

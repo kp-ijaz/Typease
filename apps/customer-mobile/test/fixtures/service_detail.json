@@ -1,0 +1,240 @@
+{
+  "id": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+  "name": "Visa application typing (document preparation)",
+  "nameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+  "description": "We check your documents for completeness and prepare the visa application form for you. You or your sponsor submit it through the official channel.",
+  "descriptionAr": null,
+  "eligibilityGuidance": "Eligibility is decided by the issuing authority, not by the centre. Authority and third-party amounts shown are estimates only. The amounts that apply on the day are confirmed in your quotation.",
+  "category": {
+    "key": "visa",
+    "name": "Visa Assistance",
+    "nameAr": "المساعدة في التأشيرات",
+    "icon": "plane"
+  },
+  "complianceCapability": "DOCUMENT_PREPARATION_ONLY",
+  "estimatedProcessingHours": 24,
+  "paymentPolicy": "BEFORE_PROCESSING",
+  "onlineAvailable": true,
+  "allBranches": true,
+  "branchIds": [],
+  "price": {
+    "serviceId": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+    "priceId": "641ffe37-01f9-4b76-a3b4-a28b65398cbc",
+    "source": "DEFAULT",
+    "branchId": null,
+    "corporateAccountId": null,
+    "currency": "AED",
+    "validFrom": "2026-10-08T22:44:34.205Z",
+    "serviceFee": "120.00",
+    "serviceFeeSource": "CATALOGUE",
+    "listServiceFee": "120.00",
+    "governmentFeeEstimate": "350.00",
+    "thirdPartyFeeEstimate": "0.00",
+    "taxMode": "SERVICE_FEE_ONLY",
+    "taxRatePercent": "5.00",
+    "components": [
+      {
+        "component": "SERVICE_FEE",
+        "amount": "120.00",
+        "isEstimate": false,
+        "taxable": true,
+        "taxAmount": "6.00",
+        "total": "126.00"
+      },
+      {
+        "component": "GOVERNMENT_FEE",
+        "amount": "350.00",
+        "isEstimate": true,
+        "taxable": false,
+        "taxAmount": "0.00",
+        "total": "350.00"
+      },
+      {
+        "component": "THIRD_PARTY_FEE",
+        "amount": "0.00",
+        "isEstimate": true,
+        "taxable": false,
+        "taxAmount": "0.00",
+        "total": "0.00"
+      }
+    ],
+    "subtotal": "470.00",
+    "taxableAmount": "120.00",
+    "taxAmount": "6.00",
+    "total": "476.00",
+    "paymentPolicy": "BEFORE_PROCESSING",
+    "depositPercent": null,
+    "dueBeforeProcessing": "476.00",
+    "containsEstimates": true
+  },
+  "requirements": [
+    {
+      "id": "a74be5f0-85c6-4edc-9a01-65ec76924360",
+      "documentTypeKey": "passport",
+      "label": "Passport copy (valid at least 6 months)",
+      "labelAr": "نسخة جواز السفر (صالح لمدة 6 أشهر على الأقل)",
+      "description": null,
+      "isMandatory": true,
+      "allowReuse": true,
+      "maxAgeDays": null
+    },
+    {
+      "id": "16a09714-bd93-4b15-931b-fe87a36eebc0",
+      "documentTypeKey": "photo",
+      "label": "Personal photo, white background",
+      "labelAr": "صورة شخصية بخلفية بيضاء",
+      "description": null,
+      "isMandatory": true,
+      "allowReuse": true,
+      "maxAgeDays": 180
+    },
+    {
+      "id": "6565ae71-4298-4b8d-a7cf-aacfb9ad6727",
+      "documentTypeKey": "residence_visa",
+      "label": "Sponsor's residence visa",
+      "labelAr": "إقامة الكفيل",
+      "description": null,
+      "isMandatory": false,
+      "allowReuse": true,
+      "maxAgeDays": null
+    }
+  ],
+  "form": {
+    "id": "18fc5150-0555-4dcc-a298-b09b68b2c8e9",
+    "version": 1,
+    "schema": {
+      "steps": [
+        {
+          "key": "applicant",
+          "title": "Applicant",
+          "fields": [
+            {
+              "key": "applicantName",
+              "type": "text",
+              "label": "Full name (as in passport)",
+              "labelAr": "الاسم الكامل (كما في جواز السفر)",
+              "required": true,
+              "maxLength": 160,
+              "prefillFrom": "customer.fullName"
+            },
+            {
+              "key": "nationality",
+              "type": "country",
+              "label": "Nationality",
+              "labelAr": "الجنسية",
+              "required": true,
+              "prefillFrom": "customer.nationality"
+            },
+            {
+              "key": "dateOfBirth",
+              "type": "date",
+              "label": "Date of birth",
+              "labelAr": "تاريخ الميلاد",
+              "required": true,
+              "sensitive": true,
+              "prefillFrom": "customer.dateOfBirth"
+            },
+            {
+              "key": "mobile",
+              "type": "phone",
+              "label": "Mobile number",
+              "labelAr": "رقم الهاتف المتحرك",
+              "required": true,
+              "prefillFrom": "customer.phone"
+            }
+          ],
+          "titleAr": "مقدم الطلب"
+        },
+        {
+          "key": "visa",
+          "title": "Visa details",
+          "fields": [
+            {
+              "key": "visaType",
+              "type": "select",
+              "label": "Type of visa",
+              "labelAr": "نوع التأشيرة",
+              "options": [
+                {
+                  "label": "Visit",
+                  "value": "visit",
+                  "labelAr": "زيارة"
+                },
+                {
+                  "label": "Tourist",
+                  "value": "tourist",
+                  "labelAr": "سياحية"
+                },
+                {
+                  "label": "Residence",
+                  "value": "residence",
+                  "labelAr": "إقامة"
+                },
+                {
+                  "label": "Other",
+                  "value": "other",
+                  "labelAr": "أخرى"
+                }
+              ],
+              "required": true
+            },
+            {
+              "key": "sponsorType",
+              "type": "radio",
+              "label": "Who is the sponsor?",
+              "labelAr": "من هو الكفيل؟",
+              "options": [
+                {
+                  "label": "Family member",
+                  "value": "family",
+                  "labelAr": "أحد أفراد الأسرة"
+                },
+                {
+                  "label": "Company",
+                  "value": "company",
+                  "labelAr": "شركة"
+                },
+                {
+                  "label": "No sponsor",
+                  "value": "self",
+                  "labelAr": "بدون كفيل"
+                }
+              ],
+              "required": true
+            },
+            {
+              "key": "sponsorName",
+              "type": "text",
+              "label": "Sponsor name",
+              "showIf": {
+                "in": [
+                  "family",
+                  "company"
+                ],
+                "field": "sponsorType"
+              },
+              "labelAr": "اسم الكفيل",
+              "required": true,
+              "maxLength": 160
+            },
+            {
+              "key": "passportExpiry",
+              "type": "date",
+              "label": "Passport expiry date",
+              "labelAr": "تاريخ انتهاء جواز السفر",
+              "required": true,
+              "prefillFrom": "customer.passportExpiry"
+            },
+            {
+              "key": "insideCountry",
+              "type": "checkbox",
+              "label": "The applicant is currently in the UAE",
+              "labelAr": "مقدم الطلب موجود حالياً داخل الدولة"
+            }
+          ],
+          "titleAr": "تفاصيل التأشيرة"
+        }
+      ]
+    }
+  }
+}

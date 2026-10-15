@@ -1,0 +1,27 @@
+{
+  "tenantId": "da6e1476-696f-4bf1-8397-c0e873d67cd1",
+  "slug": "mobile-fixture",
+  "name": "Mobile Fixture Typing",
+  "nameAr": null,
+  "mode": "TYPEASE",
+  "logoUrl": null,
+  "faviconUrl": null,
+  "colors": {
+    "primary": "#0B2240",
+    "secondary": "#0B7AD1",
+    "accent": "#00A166"
+  },
+  "websiteTitle": "Mobile Fixture Typing",
+  "tagline": "Typing Made Easy.",
+  "supportEmail": "owner@mobile-fixture.test",
+  "supportPhone": "+971501110001",
+  "defaultLanguage": "en",
+  "currency": "AED",
+  "timezone": "Asia/Dubai",
+  "publicCatalogueEnabled": true,
+  "features": {
+    "selfRegistration": true,
+    "corporatePortal": false,
+    "open": false
+  }
+}

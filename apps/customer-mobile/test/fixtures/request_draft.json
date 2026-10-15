@@ -1,0 +1,428 @@
+{
+  "id": "66977f7e-fad4-4183-921e-c40a9fa71f21",
+  "requestNo": "TE-000003",
+  "status": "DRAFT",
+  "statusLabel": {
+    "en": "Draft — not submitted yet",
+    "ar": "مسودة — لم تُرسل بعد"
+  },
+  "tone": "neutral",
+  "priority": "NORMAL",
+  "source": "MOBILE",
+  "paymentStatus": "UNPAID",
+  "version": 2,
+  "branch": {
+    "id": "a88ec9a4-558b-4426-b93d-c3699f985a81",
+    "code": "MAIN",
+    "name": "Main Branch",
+    "nameAr": null
+  },
+  "customer": {
+    "id": "d07e8204-075f-46c6-9073-7086af6edf0a",
+    "customerNo": "CUS-000001",
+    "fullName": "Fatima Al Mansoori",
+    "fullNameAr": "فاطمة المنصوري",
+    "type": "INDIVIDUAL"
+  },
+  "corporateAccount": null,
+  "service": {
+    "id": "604303c6-1c36-4072-a6a5-a9ffb38b995e",
+    "name": "Visa application typing (document preparation)",
+    "nameAr": "طباعة طلب تأشيرة (تجهيز المستندات)",
+    "code": "ST-VISA-TYPING"
+  },
+  "customerInstructions": "Please prepare in Arabic.",
+  "submittedAt": null,
+  "targetDate": null,
+  "completedAt": null,
+  "cancelledAt": null,
+  "overdue": false,
+  "submissionChannel": null,
+  "externalStatus": null,
+  "renewalOfDocumentId": "df45bae0-cecf-4674-b247-471606cbfbaa",
+  "createdAt": "2026-10-08T22:49:41.447Z",
+  "updatedAt": "2026-10-08T22:49:41.746Z",
+  "form": {
+    "definitionId": "18fc5150-0555-4dcc-a298-b09b68b2c8e9",
+    "schema": {
+      "steps": [
+        {
+          "key": "applicant",
+          "title": "Applicant",
+          "fields": [
+            {
+              "key": "applicantName",
+              "type": "text",
+              "label": "Full name (as in passport)",
+              "labelAr": "الاسم الكامل (كما في جواز السفر)",
+              "required": true,
+              "maxLength": 160,
+              "prefillFrom": "customer.fullName"
+            },
+            {
+              "key": "nationality",
+              "type": "country",
+              "label": "Nationality",
+              "labelAr": "الجنسية",
+              "required": true,
+              "prefillFrom": "customer.nationality"
+            },
+            {
+              "key": "dateOfBirth",
+              "type": "date",
+              "label": "Date of birth",
+              "labelAr": "تاريخ الميلاد",
+              "required": true,
+              "sensitive": true,
+              "prefillFrom": "customer.dateOfBirth"
+            },
+            {
+              "key": "mobile",
+              "type": "phone",
+              "label": "Mobile number",
+              "labelAr": "رقم الهاتف المتحرك",
+              "required": true,
+              "prefillFrom": "customer.phone"
+            }
+          ],
+          "titleAr": "مقدم الطلب"
+        },
+        {
+          "key": "visa",
+          "title": "Visa details",
+          "fields": [
+            {
+              "key": "visaType",
+              "type": "select",
+              "label": "Type of visa",
+              "labelAr": "نوع التأشيرة",
+              "options": [
+                {
+                  "label": "Visit",
+                  "value": "visit",
+                  "labelAr": "زيارة"
+                },
+                {
+                  "label": "Tourist",
+                  "value": "tourist",
+                  "labelAr": "سياحية"
+                },
+                {
+                  "label": "Residence",
+                  "value": "residence",
+                  "labelAr": "إقامة"
+                },
+                {
+                  "label": "Other",
+                  "value": "other",
+                  "labelAr": "أخرى"
+                }
+              ],
+              "required": true
+            },
+            {
+              "key": "sponsorType",
+              "type": "radio",
+              "label": "Who is the sponsor?",
+              "labelAr": "من هو الكفيل؟",
+              "options": [
+                {
+                  "label": "Family member",
+                  "value": "family",
+                  "labelAr": "أحد أفراد الأسرة"
+                },
+                {
+                  "label": "Company",
+                  "value": "company",
+                  "labelAr": "شركة"
+                },
+                {
+                  "label": "No sponsor",
+                  "value": "self",
+                  "labelAr": "بدون كفيل"
+                }
+              ],
+              "required": true
+            },
+            {
+              "key": "sponsorName",
+              "type": "text",
+              "label": "Sponsor name",
+              "showIf": {
+                "in": [
+                  "family",
+                  "company"
+                ],
+                "field": "sponsorType"
+              },
+              "labelAr": "اسم الكفيل",
+              "required": true,
+              "maxLength": 160
+            },
+            {
+              "key": "passportExpiry",
+              "type": "date",
+              "label": "Passport expiry date",
+              "labelAr": "تاريخ انتهاء جواز السفر",
+              "required": true,
+              "prefillFrom": "customer.passportExpiry"
+            },
+            {
+              "key": "insideCountry",
+              "type": "checkbox",
+              "label": "The applicant is currently in the UAE",
+              "labelAr": "مقدم الطلب موجود حالياً داخل الدولة"
+            }
+          ],
+          "titleAr": "تفاصيل التأشيرة"
+        }
+      ]
+    },
+    "values": {
+      "applicantName": "Fatima Al Mansoori",
+      "mobile": "+971501110002"
+    },
+    "visibleFields": [
+      "applicantName",
+      "nationality",
+      "dateOfBirth",
+      "mobile",
+      "visaType",
+      "sponsorType",
+      "passportExpiry",
+      "insideCountry"
+    ],
+    "fields": [
+      {
+        "key": "applicantName",
+        "value": "Fatima Al Mansoori",
+        "source": "PREFILL",
+        "verified": false,
+        "updatedAt": "2026-10-08T22:49:41.476Z"
+      },
+      {
+        "key": "mobile",
+        "value": "+971501110002",
+        "source": "PREFILL",
+        "verified": false,
+        "updatedAt": "2026-10-08T22:49:41.476Z"
+      }
+    ]
+  },
+  "checklist": [
+    {
+      "id": "33dbd62e-f4c5-4f97-a1fc-47e3fb99cc03",
+      "kind": "INPUT",
+      "documentTypeKey": "passport",
+      "label": "Passport copy (valid at least 6 months)",
+      "labelAr": "نسخة جواز السفر (صالح لمدة 6 أشهر على الأقل)",
+      "isMandatory": true,
+      "status": "VERIFIED",
+      "note": null,
+      "actionRequired": false,
+      "document": {
+        "id": "df45bae0-cecf-4674-b247-471606cbfbaa",
+        "title": "Passport copy (valid at least 6 months)",
+        "documentTypeKey": "passport",
+        "status": "AVAILABLE",
+        "verificationStatus": "VERIFIED",
+        "expiryDate": "2030-01-01T00:00:00.000Z",
+        "uploadedAt": "2026-10-08T22:45:11.219Z"
+      }
+    },
+    {
+      "id": "35302b36-1885-4af5-a660-3a3faeff4bbf",
+      "kind": "INPUT",
+      "documentTypeKey": "photo",
+      "label": "Personal photo, white background",
+      "labelAr": "صورة شخصية بخلفية بيضاء",
+      "isMandatory": true,
+      "status": "VERIFIED",
+      "note": null,
+      "actionRequired": false,
+      "document": {
+        "id": "1d3ff733-f296-4625-aa0a-72d2f95c2877",
+        "title": "Personal photo, white background",
+        "documentTypeKey": "photo",
+        "status": "AVAILABLE",
+        "verificationStatus": "VERIFIED",
+        "expiryDate": null,
+        "uploadedAt": "2026-10-08T22:45:50.004Z"
+      }
+    },
+    {
+      "id": "a5ac5c69-6499-4cc7-b79d-0918b2790ab1",
+      "kind": "INPUT",
+      "documentTypeKey": "residence_visa",
+      "label": "Sponsor's residence visa",
+      "labelAr": "إقامة الكفيل",
+      "isMandatory": false,
+      "status": "MISSING",
+      "note": null,
+      "actionRequired": false,
+      "document": null
+    }
+  ],
+  "externalReferences": [],
+  "comments": [],
+  "finance": {
+    "quotation": null,
+    "invoices": [],
+    "totals": {
+      "invoiced": "0.00",
+      "paid": "0.00",
+      "refunded": "0.00",
+      "balance": "0.00"
+    }
+  },
+  "workflow": {
+    "status": "NOT_STARTED",
+    "currentStepKey": null,
+    "steps": [
+      {
+        "key": "form",
+        "name": "Application details",
+        "nameAr": "بيانات الطلب",
+        "type": "CUSTOMER_FORM",
+        "position": 1,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "documents",
+        "name": "Upload documents",
+        "nameAr": "رفع المستندات",
+        "type": "DOCUMENT_UPLOAD",
+        "position": 2,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "verification",
+        "name": "Document verification",
+        "nameAr": "التحقق من المستندات",
+        "type": "STAFF_VERIFICATION",
+        "position": 3,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "quotation",
+        "name": "Quotation",
+        "nameAr": "عرض السعر",
+        "type": "QUOTATION",
+        "position": 4,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "customer-approval",
+        "name": "Quotation approval",
+        "nameAr": "الموافقة على عرض السعر",
+        "type": "CUSTOMER_APPROVAL",
+        "position": 5,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "payment",
+        "name": "Payment",
+        "nameAr": "الدفع",
+        "type": "PAYMENT",
+        "position": 6,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "prepare",
+        "name": "Prepare application",
+        "nameAr": "تحضير الطلب",
+        "type": "STAFF_TASK",
+        "position": 7,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "submission",
+        "name": "Submission and external processing",
+        "nameAr": "التقديم والمعالجة الخارجية",
+        "type": "EXTERNAL_PROCESSING",
+        "position": 8,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      },
+      {
+        "key": "completion",
+        "name": "Final review and completion",
+        "nameAr": "المراجعة النهائية والإنجاز",
+        "type": "COMPLETION",
+        "position": 9,
+        "status": "PENDING",
+        "current": false,
+        "startedAt": null,
+        "completedAt": null
+      }
+    ]
+  },
+  "allowedActions": {
+    "transitions": [
+      {
+        "to": "SUBMITTED",
+        "action": "Submit",
+        "requiresReason": false,
+        "enabled": false,
+        "blocked": {
+          "code": "FORM_INVALID",
+          "message": "The application form is not complete: Nationality is required."
+        }
+      },
+      {
+        "to": "CANCELLED",
+        "action": "Cancel request",
+        "requiresReason": true,
+        "enabled": true
+      }
+    ],
+    "other": [
+      "edit_fields",
+      "edit_details",
+      "upload_documents",
+      "comment"
+    ]
+  },
+  "nextStep": {
+    "waitingOn": "CUSTOMER",
+    "text": {
+      "en": "Complete the form, add the documents and submit the request.",
+      "ar": "أكمل النموذج وأضف المستندات ثم أرسل الطلب."
+    }
+  },
+  "history": [
+    {
+      "id": "ae771839-3b25-42eb-9bf1-e9cd9512af9b",
+      "status": "DRAFT",
+      "statusLabel": {
+        "en": "Draft — not submitted yet",
+        "ar": "مسودة — لم تُرسل بعد"
+      },
+      "message": "Draft — not submitted yet",
+      "at": "2026-10-08T22:49:41.466Z"
+    }
+  ]
+}

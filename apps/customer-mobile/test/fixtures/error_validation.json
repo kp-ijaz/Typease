@@ -1,0 +1,28 @@
+{
+  "statusCode": 400,
+  "code": "VALIDATION_FAILED",
+  "message": "Please check the highlighted fields.",
+  "details": [
+    {
+      "path": "fullName",
+      "message": "String must contain at least 2 character(s)"
+    },
+    {
+      "path": "email",
+      "message": "Invalid email"
+    },
+    {
+      "path": "password",
+      "message": "Use at least 10 characters"
+    },
+    {
+      "path": "password",
+      "message": "Include upper-case, lower-case and a number"
+    },
+    {
+      "path": "acceptTerms",
+      "message": "You must accept the terms and privacy notice"
+    }
+  ],
+  "requestId": "b59fc8ba-eb83-42e1-9ae6-e547ed503885"
+}

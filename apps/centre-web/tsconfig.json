@@ -1,0 +1,42 @@
+{
+  "extends": "@typease/config/tsconfig.next.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@typease/ui": [
+        "../../packages/ui/src/index.ts"
+      ],
+      "@typease/ui/server": [
+        "../../packages/ui/src/server.ts"
+      ],
+      "@typease/branding": [
+        "../../packages/branding/src/index.ts"
+      ],
+      "@typease/api-client": [
+        "../../packages/api-client/src/index.ts"
+      ],
+      "@typease/types": [
+        "../../packages/types/src/index.ts"
+      ],
+      "@typease/validation": [
+        "../../packages/validation/src/index.ts"
+      ],
+      "@typease/permissions": [
+        "../../packages/permissions/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

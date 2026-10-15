@@ -1,0 +1,6 @@
+{
+  "statusCode": 401,
+  "code": "INVALID_CREDENTIALS",
+  "message": "The email or password is incorrect.",
+  "requestId": "5e1e1838-3e37-4bb7-802d-746d942c5020"
+}

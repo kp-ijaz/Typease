@@ -1,0 +1,35 @@
+# gitleaks configuration (used by the "secrets" job in .github/workflows/ci.yml):
+#   docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.2 git /repo --config /repo/infrastructure/security/gitleaks.toml --redact
+#
+# The default rule set is kept. The allowlist only covers values that are DEVELOPMENT or
+# TEST constants by design and are rejected by scripts/production-readiness.mjs:
+#   * fixed test secrets of the API test harness,
+#   * the clearly marked development env files of docker-compose.yml,
+#   * the documented placeholders of the env templates.
+# Do not add real findings here: rotate the secret and remove it from history instead.
+title = "TypEase"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Development / test constants and documentation placeholders"
+paths = [
+  '''^infrastructure/docker/env/dev/[a-z]+\.env$''',
+  '''^infrastructure/deployment/env/[a-z]+\.env\.example$''',
+  '''^\.env\.example$''',
+  '''^services/api/test/env\.ts$''',
+  '''^pnpm-lock\.yaml$''',
+  '''^docs/api/openapi\.json$''',
+]
+regexes = [
+  '''(local|docker)-development-(jwt-secret|hmac-key)-0123456789abcdef''',
+  '''test-only-(jwt-secret|hmac-key)-[0-9a-f]+''',
+  # .github/workflows/ci.yml, job e2e: throw-away values for a database that lives for one job
+  '''ci-e2e-only-(jwt-secret|hmac-key)-[0-9a-f]+''',
+  '''BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=''',
+  # the shared, publicly documented password of the DEMO seed (never valid in production)
+  '''TypEase-Demo-2026''',
+  '''[a-z]+_dev_pw''',
+  '''change-me''',
+]

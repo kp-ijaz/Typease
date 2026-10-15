@@ -1,0 +1,170 @@
+/* ==========================================================================
+   TypEase Landing — typease.css (on top of custom.css)
+   ========================================================================== */
+
+/* ---------- Logos ---------- */
+.nav-image-1 { height:40px; }
+.footer-image-1 { height:48px; }
+
+/* ---------- Hero: floating cards show TypEase crops ---------- */
+.hero-block-23 { aspect-ratio:836/188; background-image:url(../assets/card-kpis.jpg); background-size:cover; background-position:center; }
+.hero-block-30 { aspect-ratio:398/318; background-image:url(../assets/card-chat.jpg); background-size:cover; background-position:center; }
+.hero-block-33 { aspect-ratio:238/152; background-image:url(../assets/card-sla.jpg); background-size:cover; background-position:center; }
+.hero-link-1 { min-width:0; padding:15px 22px; font-size:16px; }
+.te-hero-all { color:#9CC8F0; font-weight:600; font-size:15px; }
+.te-hero-all:hover { color:#fff; }
+
+/* ---------- Demo logins ---------- */
+.te-demo-section {
+  position:relative;
+  overflow:hidden;
+  background:#F5F8FC;
+  color:#071430;
+  padding:clamp(90px,10vw,150px) 0;
+  scroll-margin-top:90px;
+}
+.te-demo-inner {
+  position:relative;
+  max-width:var(--container-max);
+  margin:0 auto;
+  padding:0 clamp(20px,4vw,48px);
+}
+.te-demo-head {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));
+  gap:clamp(24px,5vw,80px);
+  align-items:end;
+}
+.te-demo-pass {
+  margin-top:18px;
+  display:inline-flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  border-radius:12px;
+  background:#fff;
+  border:1px solid #DFE7F2;
+  font-size:15px;
+  color:#4A5568;
+}
+.te-demo-pass code {
+  font-family:ui-monospace,'SF Mono',Menlo,monospace;
+  font-size:15px;
+  font-weight:700;
+  color:#071430;
+  user-select:all;
+}
+.te-demo-tabs {
+  margin-top:clamp(40px,5vw,64px);
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:6px;
+  border-radius:999px;
+  background:#fff;
+  border:1px solid #DFE7F2;
+  width:fit-content;
+  max-width:100%;
+}
+.te-demo-tab {
+  border:0;
+  cursor:pointer;
+  padding:12px 20px;
+  border-radius:999px;
+  font-family:'Figtree',sans-serif;
+  font-size:15px;
+  font-weight:600;
+  background:transparent;
+  color:#4A5568;
+  transition:background .3s,color .3s;
+}
+.te-demo-tab span {
+  display:inline-block;
+  min-width:22px;
+  margin-left:6px;
+  padding:1px 7px;
+  border-radius:999px;
+  background:#E6EEF8;
+  color:#0B7AD1;
+  font-size:13px;
+}
+.te-demo-tab.is-active { background:#0B7AD1; color:#fff; }
+.te-demo-tab.is-active span { background:rgba(255,255,255,.2); color:#fff; }
+.te-demo-tab:focus-visible, .te-demo-btn:focus-visible, .te-role-login:focus-visible { outline:3px solid #12A866; outline-offset:2px; }
+.te-demo-apptext { margin:18px 0 0; font-size:17px; line-height:1.55; color:#4A5568; max-width:760px; }
+.te-demo-centre {
+  margin:36px 0 14px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#7A8699;
+}
+.te-demo-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));
+  gap:16px;
+}
+.te-demo-card {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:20px;
+  border-radius:20px;
+  background:#fff;
+  border:1px solid #DFE7F2;
+  box-shadow:0 18px 40px -30px rgba(8,30,80,.45);
+  transition:transform .3s,box-shadow .3s,border-color .3s;
+}
+.te-demo-card:hover { transform:translateY(-4px); border-color:#B5C3D4; box-shadow:0 30px 50px -30px rgba(8,30,80,.5); }
+.te-demo-who { display:flex; align-items:center; gap:12px; }
+.te-demo-avatar {
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#0A3A8F,#1487E3 60%,#12A866);
+  color:#fff;
+  font-weight:700;
+  font-size:15px;
+}
+.te-demo-role { font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:17px; color:#071430; }
+.te-demo-name { font-size:14px; color:#4A5568; }
+.te-demo-email { font-family:ui-monospace,'SF Mono',Menlo,monospace; font-size:13px; color:#0A5FA8; overflow-wrap:anywhere; }
+.te-demo-note { flex:1 1 auto; margin:0; font-size:14px; line-height:1.5; color:#5C677A; }
+.te-demo-btn, .te-role-login {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-top:4px;
+  padding:12px 16px;
+  border-radius:12px;
+  background:#0B7AD1;
+  color:#fff;
+  font-weight:600;
+  font-size:15px;
+  transition:background .25s,transform .25s;
+}
+.te-demo-btn:hover, .te-role-login:hover { background:#0A5FA8; color:#fff; transform:translateY(-2px); }
+.te-role-login { margin-top:22px; width:fit-content; padding:14px 22px; }
+
+/* Hero demo buttons: an even grid instead of a ragged wrap */
+.hero-block-8 { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); width:100%; max-width:560px; }
+
+/* ---------- Phones (the reference layout has no small-screen rules for these) ---------- */
+.nav-link-1 { flex:0 0 auto; }
+@media (max-width: 760px) {
+  .nav-block-1, .nav-link-3 { display:none; }
+  .nav-nav-1 { padding:8px 8px 8px 14px; gap:12px; }
+  .nav-image-1 { height:30px; }
+  .nav-link-4 { height:40px; padding:0 12px; font-size:14px; gap:7px; }
+  .nav-image-2 { height:14px; }
+  .te-demo-tabs { display:grid; grid-template-columns:1fr 1fr; width:100%; border-radius:18px; }
+  .te-demo-tab { border-radius:12px; padding:12px 8px; font-size:14px; }
+  .te-demo-tab span { margin-left:4px; }
+}

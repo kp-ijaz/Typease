@@ -1,0 +1,48 @@
+{
+  "id": "4bc86d75-c2c2-46fc-af72-f4aefb09b876",
+  "ticketNo": "TKT-000001",
+  "subject": "Where can I collect my documents?",
+  "category": "General",
+  "status": "RESOLVED",
+  "requestId": "3c3817bd-7972-49ff-840d-6bd2c1574c6c",
+  "requestNo": "TE-000001",
+  "resolvedAt": "2026-10-08T22:47:37.237Z",
+  "closedAt": null,
+  "resolutionSummary": "Answered.",
+  "canReply": true,
+  "createdAt": "2026-10-08T22:47:37.043Z",
+  "updatedAt": "2026-10-08T22:47:37.238Z",
+  "messages": [
+    {
+      "id": "da1b9131-fced-4614-a28c-e96609800b6f",
+      "fromSupport": false,
+      "authorName": "Fatima Al Mansoori",
+      "body": "My request is complete. Can I collect the printed copy at the branch?",
+      "attachments": [
+        {
+          "documentId": "df45bae0-cecf-4674-b247-471606cbfbaa",
+          "title": "Passport copy (valid at least 6 months)"
+        }
+      ],
+      "createdAt": "2026-10-08T22:47:37.054Z"
+    },
+    {
+      "id": "46530094-9a76-4a91-8e20-e0b84f279c17",
+      "fromSupport": true,
+      "authorName": null,
+      "body": "Yes, any day between 9:00 and 18:00.",
+      "attachments": [],
+      "createdAt": "2026-10-08T22:47:37.120Z"
+    },
+    {
+      "id": "efc41a13-5954-4b43-bdfd-94d9cde8fcd3",
+      "fromSupport": false,
+      "authorName": "Fatima Al Mansoori",
+      "body": "Thank you.",
+      "attachments": [],
+      "createdAt": "2026-10-08T22:47:37.188Z"
+    }
+  ],
+  "feedback": null,
+  "canRate": true
+}

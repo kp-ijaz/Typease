@@ -1,0 +1,276 @@
+# TypEase reverse proxy - PRODUCTION (single entry point, ports 80 / 443 only).
+#
+# Environment (infrastructure/deployment/env/caddy.env.example):
+#   TYPEASE_BASE_DOMAIN       e.g. typease.ae
+#   ACME_EMAIL                contact address for Let's Encrypt / ZeroSSL
+#   S3_PUBLIC_ASSETS_PROXY    true when STORAGE_DRIVER=s3 (see the public_assets snippet)
+#   S3_PUBLIC_ASSETS_UPSTREAM / S3_PUBLIC_ASSETS_BUCKET
+#
+# Routing (BASE = TYPEASE_BASE_DOMAIN):
+#   api.BASE        -> api            app.BASE   -> centre-web      admin.BASE -> platform-admin
+#   corporate.BASE  -> corporate-portal          portal.BASE -> customer-web (shared portal, CNAME target)
+#   anything else   -> customer-web, but ONLY if the API confirms the host name
+#                      (<slug>.BASE of an existing centre, or a VERIFIED custom domain)
+#
+# Certificates:
+#   * the five platform hosts above: ordinary automatic HTTPS (issued at start-up);
+#   * every other host: ON-DEMAND TLS. On the first TLS handshake for an unknown name Caddy
+#     calls   GET http://api:4000/api/v1/internal/tls/ask?domain=<name>   and only requests a
+#     certificate when the API answers 200. Unknown names never get a certificate, so
+#     nobody can make this server burn its ACME rate limits by pointing DNS at it.
+#   * Tenant sub-domains therefore also work without a wildcard certificate. Let's Encrypt
+#     limits new certificates per registered domain per week, so a platform that expects
+#     many new centres per week should switch to ONE wildcard certificate (DNS-01 challenge,
+#     needs a Caddy build with your DNS provider's module): see Caddyfile.prod.wildcard and
+#     docs/deployment/reverse-proxy-and-tls.md.
+#
+# Behind a CDN / load balancer: see "Real client address" in the same document before
+# adding `trusted_proxies` - the API trusts exactly ONE proxy hop.
+#
+# Validate after editing (needs Docker):  scripts/validate-infra.sh
+{
+	email {$ACME_EMAIL}
+	admin localhost:2019
+	metrics
+	on_demand_tls {
+		ask http://api:4000/api/v1/internal/tls/ask
+	}
+	servers {
+		timeouts {
+			read_header 15s
+			idle 2m
+		}
+	}
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Snippets
+# ---------------------------------------------------------------------------
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+		-X-Powered-By
+		defer
+	}
+}
+
+# JSON access log on stdout (collected by the Docker json-file driver and shipped to Loki).
+# Authorization and Cookie headers are redacted by Caddy itself. One-time tokens travel in
+# URLs (email links, signed local-storage links, document share links): redact them too.
+(access_log) {
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp `(/storage/local/(?:upload|download)/|/shared-documents/|[?&](?:token|code|sig|signature|otp)=)[^/?&#]+` "${1}REDACTED"
+				request>headers>X-Internal-Token delete
+			}
+		}
+	}
+}
+
+# /api/v1/internal/* (on-demand TLS "ask", Prometheus metrics) is for the proxy and the
+# monitoring network only. It is refused on EVERY public host, and the token header is
+# stripped from anything that comes from outside. The match is made on the cleaned,
+# decoded path and is case-insensitive.
+(block_internal) {
+	request_header -X-Internal-Token
+	@internal path /api/v1/internal /api/v1/internal/*
+	respond @internal 404
+}
+
+# The API. Replicas are discovered through Docker's DNS (the service name returns one A
+# record per container), re-resolved every few seconds, so a rolling restart or
+# `--scale api=N` needs no proxy reload. A replica that refuses connections is skipped
+# and the request is retried on another one for up to lb_try_duration.
+# X-Forwarded-For / -Proto / -Host are set by Caddy; values sent by the client are
+# discarded (no trusted proxies configured), so the API sees the real client address.
+(api_upstream) {
+	reverse_proxy {
+		dynamic a {
+			name api
+			port 4000
+			refresh 5s
+		}
+		lb_policy least_conn
+		lb_try_duration 10s
+		lb_try_interval 250ms
+		fail_duration 15s
+		max_fails 2
+		transport http {
+			dial_timeout 3s
+		}
+	}
+}
+
+# A web application: {args[0]} = service name, {args[1]} = port.
+(web_upstream) {
+	reverse_proxy {
+		dynamic a {
+			name {args[0]}
+			port {args[1]}
+			refresh 5s
+		}
+		lb_policy least_conn
+		lb_try_duration 10s
+		lb_try_interval 250ms
+		fail_duration 15s
+		max_fails 2
+	}
+}
+
+# Logos / favicons. With STORAGE_DRIVER=s3 the API stores them in the public assets
+# bucket but still hands out https://api.BASE/api/v1/public/assets/<key> URLs, so the
+# proxy serves that path straight from the bucket (anonymous read on that bucket only).
+# Disabled (the request falls through to the API) unless S3_PUBLIC_ASSETS_PROXY=true.
+(public_assets) {
+	@assets {
+		method GET HEAD
+		path_regexp asset `^/api/v1/public/assets/([A-Za-z0-9_-]{16,80}\.(?:png|jpg|webp))$`
+		expression `{$S3_PUBLIC_ASSETS_PROXY:false} == true`
+	}
+	handle @assets {
+		rewrite * /{$S3_PUBLIC_ASSETS_BUCKET:typease-public-assets}/{re.asset.1}
+		reverse_proxy {$S3_PUBLIC_ASSETS_UPSTREAM:http://minio:9000} {
+			header_up Host {upstream_hostport}
+			header_up -Authorization
+			header_up -Cookie
+			header_down Cache-Control "public, max-age=31536000, immutable"
+			header_down X-Content-Type-Options "nosniff"
+		}
+	}
+}
+
+# Routing shared by EVERY host that serves a web application:
+#   1. /api/v1/internal/* is refused (block_internal);
+#   2. /api/v1/* goes straight to the API, so a web app can call the API on its own origin.
+#      The apps can also proxy /api/v1 themselves (`apiProxy` in packages/config/next.mjs), but
+#      behind this proxy that path must not be used: the API would see the web container as the
+#      client (wrong address in rate limits and audit entries), and the internal endpoints
+#      would be reachable through the app. Handling the prefix here avoids both.
+#   3. everything else goes to the web application {args[0]}:{args[1]}.
+(web_routes) {
+	route {
+		import block_internal
+		@api path /api/v1/*
+		handle @api {
+			import public_assets
+			import api_upstream
+		}
+		import web_upstream {args[0]} {args[1]}
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Platform hosts (certificates issued at start-up)
+# ---------------------------------------------------------------------------
+
+api.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	# UPLOAD_MAX_BYTES is 15 MiB. With S3 storage the browser uploads straight to the
+	# object store; the limit matters for the local driver and multipart endpoints.
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	route {
+		import block_internal
+		import public_assets
+		import api_upstream
+	}
+}
+
+app.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes centre-web 3001
+}
+
+admin.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes platform-admin 3004
+}
+
+corporate.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes corporate-portal 3003
+}
+
+# Shared customer portal = CUSTOMER_WEB_URL and CUSTOM_DOMAIN_CNAME_TARGET. It must be an
+# explicit site: "portal" is a reserved name, the ask endpoint would not approve it.
+portal.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes customer-web 3002
+}
+
+# Apex and www: send visitors to the staff console (replace with your marketing site).
+{$TYPEASE_BASE_DOMAIN}, www.{$TYPEASE_BASE_DOMAIN} {
+	import security_headers
+	redir https://app.{$TYPEASE_BASE_DOMAIN}{uri} 302
+}
+
+# ---------------------------------------------------------------------------
+# Tenant sub-domains and verified custom domains (on-demand certificates)
+# ---------------------------------------------------------------------------
+# /api/v1/* is served on these hosts too (web_routes): a portal on a centre's own domain
+# must call the API on ITS OWN origin, because the refresh cookie is SameSite=Lax and
+# browsers do not send it to another site (api.BASE is a different site for portal.some-centre.ae).
+https:// {
+	tls {
+		on_demand
+	}
+	import security_headers
+	import access_log
+	encode zstd gzip
+	request_body {
+		max_size {$UPLOAD_MAX_BODY:16MB}
+	}
+	import web_routes customer-web 3002
+}
+
+# Optional extra sites, e.g. sites/wildcard.caddy (one wildcard certificate for all tenant
+# sub-domains). A glob that matches nothing is not an error.
+import sites/*.caddy
+
+# Plain HTTP: ACME HTTP-01 challenges are answered by Caddy itself before this site
+# is consulted; everything else is redirected.
+http:// {
+	redir https://{host}{uri} 308
+}
+
+# Prometheus metrics of the proxy itself. The port is not published; only containers
+# on Caddy's networks can reach it.
+http://:9180 {
+	metrics
+}

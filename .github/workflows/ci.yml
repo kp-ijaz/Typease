@@ -1,0 +1,378 @@
+# Continuous integration: every pull request and every push to main.
+#
+# Jobs
+#   quality     install, build packages, type-check, lint, package unit tests, infrastructure validation
+#   api-tests   API integration tests against PostgreSQL 16 + Redis (service containers)
+#   build       API, worker and the four web applications compile
+#   e2e         Playwright browser tests against a locally started stack
+#   mobile      Flutter analyze + test (allowed to fail, see the comment on the job)
+#   audit       pnpm audit of production dependencies
+#   secrets     gitleaks over the full history
+#   images      container images build (no push) + Trivy scan
+#
+# Third-party actions are pinned to exact release tags. Tags can be moved by their owners:
+# before relying on this pipeline for production, replace each tag with the commit SHA it
+# points to (e.g. with `pinact run` or `gh api repos/<owner>/<repo>/git/ref/tags/<tag>`).
+# The SHAs could not be looked up where this file was written (no network access).
+#
+# This workflow has not been executed yet: it was reviewed by hand and its YAML was parsed.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22.22.0"
+  # `prisma generate` needs no engine download in CI either way; left unset on purpose
+  # (runners have network access). Set PRISMA_SCHEMA_ENGINE_BINARY only for air-gapped builds.
+  NEXT_TELEMETRY_DISABLED: "1"
+  CI: "true"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  quality:
+    name: Type-check, lint, unit tests, infra validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: pnpm/action-setup@v4.1.0        # version from "packageManager" in package.json
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build shared packages (includes prisma generate)
+        run: pnpm build:packages
+      - name: Type-check
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Unit tests (packages)
+        run: pnpm test:unit
+      - name: Build the API (needed by the env-template check)
+        run: pnpm --filter @typease/api build
+      # Compose files, env templates, shell scripts, Caddyfiles (caddy validate), Prometheus
+      # rules (promtool), Dockerfiles (hadolint), workflows (actionlint). The runner has a
+      # Docker daemon, so --strict (no check may be skipped) is achievable here.
+      - name: Validate infrastructure
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml
+          scripts/validate-infra.sh --strict
+
+  # ---------------------------------------------------------------------------
+  api-tests:
+    name: API integration tests (PostgreSQL 16 + Redis)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:16.11-bookworm
+        env:
+          POSTGRES_PASSWORD: postgres       # throw-away CI database
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7.4.2-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      # services/api/test/env.ts builds the three connection URLs from these. The role
+      # passwords are the fixed test defaults of that file (owner_dev_pw / app_dev_pw /
+      # system_dev_pw): CI-only credentials for a database that lives for one job.
+      TEST_PG_HOST: 127.0.0.1
+      TEST_PG_PORT: "5432"
+      TEST_PG_DATABASE: typease_test
+      TEST_REDIS_URL: redis://127.0.0.1:6379/1
+      TEST_STORAGE_DIR: ${{ runner.temp }}/typease-test-storage
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build shared packages
+        run: pnpm build:packages
+      # The schema OWNER (never a superuser) and an empty database. The test global setup runs
+      # the real migration files as this role, which creates typease_app / typease_system
+      # (row-level security is therefore enforced in the tests exactly as in production).
+      - name: Create the owner role and the test database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE typease_owner LOGIN CREATEROLE NOSUPERUSER PASSWORD 'owner_dev_pw';
+          CREATE DATABASE typease_test OWNER typease_owner;
+          SQL
+      - name: API tests (unit + integration, real PostgreSQL with RLS)
+        run: pnpm --filter @typease/api test
+      - name: Detect the cross-module test suites
+        id: suites
+        run: echo "present=$([ -f tests/jest.config.js ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Integration tests (tests/integration)
+        if: steps.suites.outputs.present == 'true'
+        run: pnpm test:integration
+      - name: Security and tenant-isolation tests (tests/security)
+        if: steps.suites.outputs.present == 'true'
+        run: pnpm test:security
+
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build API, worker and web applications
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      # Inlined into the web bundles at build time. Any syntactically valid URL will do for a
+      # compile check; real images are built per environment by release.yml.
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build shared packages
+        run: pnpm build:packages
+      - name: Build API and worker
+        run: pnpm build:api
+      - name: Build the four web applications
+        run: pnpm build:web
+
+  # ---------------------------------------------------------------------------
+  e2e:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    needs: [quality]
+    services:
+      postgres:
+        image: postgres:16.11-bookworm
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7.4.2-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      # A complete development configuration for a single-process API (jobs run inline).
+      # Test-only values; scripts/production-readiness.mjs rejects every one of them.
+      NODE_ENV: development
+      DATABASE_MIGRATION_URL: postgresql://typease_owner:owner_dev_pw@127.0.0.1:5432/typease_e2e
+      DATABASE_URL: postgresql://typease_app:app_dev_pw@127.0.0.1:5432/typease_e2e
+      DATABASE_SYSTEM_URL: postgresql://typease_system:system_dev_pw@127.0.0.1:5432/typease_e2e
+      REDIS_URL: redis://127.0.0.1:6379/2
+      JWT_ACCESS_SECRET: ci-e2e-only-jwt-secret-0123456789abcdef0123456789
+      HMAC_KEY: ci-e2e-only-hmac-key-0123456789abcdef0123456789
+      DATA_ENCRYPTION_KEY: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      EXPOSE_DEV_TOKENS: "true"
+      PAYMENT_SANDBOX_ENABLED: "true"
+      ONBOARDING_REQUIRE_PHONE_VERIFICATION: "false"
+      RATE_LIMIT_ENABLED: "false"
+      QUEUE_DRIVER: inline
+      QUEUE_INLINE_AUTORUN: "true"
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: ${{ runner.temp }}/typease-e2e-storage
+      PLATFORM_BASE_DOMAIN: typease.localhost
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      TYPEASE_API_URL: http://localhost:4000
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Detect the Playwright suite
+        id: detect
+        run: echo "present=$([ -f tests/e2e/playwright.config.ts ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: No browser tests yet
+        if: steps.detect.outputs.present != 'true'
+        run: echo "::notice::tests/e2e/playwright.config.ts does not exist yet - the browser tests are skipped."
+      - uses: pnpm/action-setup@v4.1.0
+        if: steps.detect.outputs.present == 'true'
+      - uses: actions/setup-node@v4.4.0
+        if: steps.detect.outputs.present == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install dependencies
+        if: steps.detect.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Install the Playwright browser
+        if: steps.detect.outputs.present == 'true'
+        run: pnpm --filter @typease/tests exec playwright install --with-deps chromium
+      - name: Build everything
+        if: steps.detect.outputs.present == 'true'
+        run: pnpm build
+      - name: Create the database, migrate, seed
+        if: steps.detect.outputs.present == 'true'
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE typease_owner LOGIN CREATEROLE NOSUPERUSER PASSWORD 'owner_dev_pw';
+          CREATE DATABASE typease_e2e OWNER typease_owner;
+          SQL
+          pnpm db:migrate
+          if [ -f database/seed/seed.ts ]; then pnpm db:seed; fi
+      - name: Start the API and the web applications
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          (cd services/api && nohup node dist/main.js > "$RUNNER_TEMP/logs/api.log" 2>&1 &)
+          scripts/wait-for.sh --timeout 120 http http://127.0.0.1:4000/health/ready
+          for app in centre-web customer-web corporate-portal platform-admin; do
+            nohup pnpm --filter "@typease/$app" start > "$RUNNER_TEMP/logs/$app.log" 2>&1 &
+          done
+          for port in 3001 3002 3003 3004; do scripts/wait-for.sh --timeout 120 tcp "127.0.0.1:$port"; done
+      - name: Playwright tests
+        if: steps.detect.outputs.present == 'true'
+        run: pnpm test:e2e
+      - name: Upload the report and the server logs
+        if: always() && steps.detect.outputs.present == 'true'
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: playwright-report
+          path: |
+            tests/playwright-report
+            tests/test-results
+            ${{ runner.temp }}/logs
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  mobile:
+    name: Flutter analyze + test (customer mobile app)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # ALLOWED TO FAIL ON PURPOSE. The mobile app (apps/customer-mobile) was written without a
+    # Flutter SDK: it has never been compiled, analysed or tested anywhere, and its package
+    # versions were not resolved. This job is the first place where that happens. Remove
+    # `continue-on-error` as soon as the job is green once, so regressions block merges.
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: apps/customer-mobile
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          channel: stable
+          cache: true
+      - name: Bootstrap (generates the platform folders / code the repository does not contain)
+        run: |
+          if [ -x tool/bootstrap.sh ]; then tool/bootstrap.sh
+          elif [ -f tool/bootstrap.dart ]; then dart run tool/bootstrap.dart
+          else echo "no bootstrap script found in apps/customer-mobile/tool - continuing"; fi
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  # ---------------------------------------------------------------------------
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - uses: pnpm/action-setup@v4.1.0
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # Production dependencies only; fails on high and critical advisories.
+      - run: pnpm audit --prod --audit-level high
+
+  # ---------------------------------------------------------------------------
+  secrets:
+    name: Secret scanning (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0            # the whole history: a secret removed in a later commit is still leaked
+      # The gitleaks binary from its official image (the gitleaks GitHub Action needs a licence
+      # key for organisations). --redact keeps findings out of the job log.
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.2 \
+            git /repo --config /repo/infrastructure/security/gitleaks.toml --redact --no-banner --exit-code 1
+
+  # ---------------------------------------------------------------------------
+  images:
+    name: Container image (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: [quality]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: api, dockerfile: infrastructure/docker/api.Dockerfile, app: "", port: "" }
+          - { name: worker, dockerfile: infrastructure/docker/worker.Dockerfile, app: "", port: "" }
+          - { name: centre-web, dockerfile: infrastructure/docker/web.Dockerfile, app: centre-web, port: "3001" }
+          - { name: customer-web, dockerfile: infrastructure/docker/web.Dockerfile, app: customer-web, port: "3002" }
+          - { name: corporate-portal, dockerfile: infrastructure/docker/web.Dockerfile, app: corporate-portal, port: "3003" }
+          - { name: platform-admin, dockerfile: infrastructure/docker/web.Dockerfile, app: platform-admin, port: "3004" }
+    steps:
+      - uses: actions/checkout@v4.2.2
+      # The worker image can only be built once the worker entry point exists in the repository.
+      - name: Is this image buildable yet?
+        id: gate
+        run: |
+          if [ "${{ matrix.name }}" = worker ] && [ ! -f services/worker/package.json ] && [ ! -f services/api/src/worker.ts ]; then
+            echo "::notice::no worker entry point in the repository yet - the worker image is skipped."
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/setup-buildx-action@v3.10.0
+        if: steps.gate.outputs.build == 'true'
+      - name: Build (not pushed)
+        if: steps.gate.outputs.build == 'true'
+        uses: docker/build-push-action@v6.18.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: typease-${{ matrix.name }}:ci
+          build-args: |
+            APP=${{ matrix.app }}
+            PORT=${{ matrix.port }}
+            NEXT_PUBLIC_API_URL=http://localhost:4000
+            API_INTERNAL_URL=http://api:4000
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+      - name: The image runs as a non-root user
+        if: steps.gate.outputs.build == 'true'
+        run: |
+          user="$(docker inspect -f '{{.Config.User}}' "typease-${{ matrix.name }}:ci")"
+          echo "configured user: ${user:-<none>}"
+          [ -n "$user" ] && [ "$user" != root ] && [ "$user" != 0 ]
+      # Trivy from its official image (pinned). Fails on fixable CRITICAL / HIGH findings in
+      # OS packages and application dependencies.
+      - name: Trivy vulnerability scan
+        if: steps.gate.outputs.build == 'true'
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$RUNNER_TEMP/trivy-cache:/root/.cache" \
+            aquasec/trivy:0.57.1 image --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed \
+            --exit-code 1 --no-progress "typease-${{ matrix.name }}:ci"
