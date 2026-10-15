@@ -75,6 +75,17 @@ A pnpm workspace (`pnpm-workspace.yaml`). The Flutter app is outside the workspa
 | Running in containers | Docker Engine with the Compose plugin |
 | The mobile app | Flutter SDK; see [apps/customer-mobile/README.md](apps/customer-mobile/README.md) |
 
+Versions last used to develop and run the project (2026-10-15, macOS). If a newer version fails, install these:
+
+| Tool | Version | Check with |
+| --- | --- | --- |
+| Node.js | 25.6.1 (`package.json` requires 22.12 or newer) | `node -v` |
+| pnpm | 10.28.0 (pinned in `package.json` `packageManager`) | `pnpm -v` |
+| PostgreSQL | 16.14 | `psql --version` |
+| Redis | 8.10.1 | `redis-server --version` |
+| Docker | 29.8.1 | `docker --version` |
+| Flutter | 3.41.6 (stable) | `flutter --version` |
+
 ## Quick start without Docker
 
 This is the path that was used while the software was built. It needs PostgreSQL and Redis on `127.0.0.1`.
